@@ -1,6 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Initialize safely to prevent app crash if env var is missing during load
+let ai: GoogleGenAI | null = null;
+try {
+    if (process.env.API_KEY) {
+        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    } else {
+        console.warn("Gemini Service: API_KEY is missing. AI features will be disabled.");
+    }
+} catch (e) {
+    console.error("Gemini Service Initialization Error:", e);
+}
 
 export interface GeminiResponse<T> {
   success: boolean;
@@ -45,6 +55,10 @@ const safeParseJSON = (text: string) => {
 };
 
 const generateData = async (systemPrompt: string, userPrompt: string) => {
+    if (!ai) {
+        return { success: false, error: "System Configuration Error: API Key missing." };
+    }
+
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
