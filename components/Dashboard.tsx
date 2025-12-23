@@ -5,7 +5,7 @@ import {
   MessageCircle, Activity, ChevronRight, CheckCircle2, Lock, ArrowLeft, Star, AlertTriangle, Lightbulb, Flame, Droplets, Wind, Mountain,
   Heart, Briefcase, Zap, Layers, Target, Clock, BookOpen, Fingerprint, Loader2, Sparkles, ArrowRight as ArrowIcon, X,
   Quote, Sun, Play, Check, Moon, Share2, Map, Calendar, TrendingUp, Minus, Ghost, Eye, Send, RotateCcw, Sunrise, Sunset, Coffee, ListChecks,
-  Globe, Handshake, HeartOff, Landmark, History, Bell, BellOff, Info
+  Globe, Handshake, HeartOff, Landmark, History, Bell, BellOff, Info, Sparkle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../services/firebaseConfig';
@@ -13,13 +13,13 @@ import { analyzePersonality, analyzeTemperament, generateLifeSynthesis, generate
 import { fetchMentors, Mentor, saveUserProgress, getUserProfile, DailyLog } from '../services/adminService';
 
 const MODULES = [
-  { id: 'personality', title: 'Personality Archetype', desc: 'Jungian cognitive assessment', icon: Fingerprint, color: 'purple' },
-  { id: 'temperament', title: 'Temperament Matrix', desc: 'Biological energy rhythm', icon: Activity, color: 'cyan' },
-  { id: 'ikigai', title: 'Ikigai Compass', desc: 'Passion and purpose mapping', icon: Compass, color: 'pink' },
-  { id: 'synthesis', title: 'Master Strategy', desc: 'Holistic lifecycle roadmap', icon: Zap, color: 'indigo' },
-  { id: 'mirror', title: 'Mirror Chamber', desc: 'Real-time inner truth dialogue', icon: Eye, color: 'blue' },
-  { id: 'shadow', title: 'Shadow Work', desc: 'Dark-side integration', icon: Ghost, color: 'slate' },
-  { id: 'identity', title: 'Sanctuary Identity', desc: 'Mystical name reveal', icon: Star, color: 'amber' }
+  { id: 'personality', title: 'Personality Archetype', desc: 'Step 1: The Core Essence', icon: Fingerprint, color: 'purple', requiredFor: null },
+  { id: 'temperament', title: 'Temperament Matrix', desc: 'Step 2: Biological Rhythms', icon: Activity, color: 'cyan', requiredFor: 'personality' },
+  { id: 'ikigai', title: 'Ikigai Compass', desc: 'Step 3: Purpose Alignment', icon: Compass, color: 'pink', requiredFor: 'temperament' },
+  { id: 'synthesis', title: 'Master Strategy', desc: 'Step 4: The Holistic Path', icon: Zap, color: 'indigo', requiredFor: 'ikigai' },
+  { id: 'mirror', title: 'Mirror Chamber', desc: 'Daily Truth Dialogue', icon: Eye, color: 'blue', requiredFor: 'personality' },
+  { id: 'shadow', title: 'Shadow Work', desc: 'Integration Rites', icon: Ghost, color: 'slate', requiredFor: 'synthesis' },
+  { id: 'identity', title: 'Sanctuary Identity', desc: 'Final Designation', icon: Star, color: 'amber', requiredFor: 'personality' }
 ];
 
 const DynamicLoader = ({ text }: { text: string }) => {
@@ -35,7 +35,7 @@ const DynamicLoader = ({ text }: { text: string }) => {
             <Loader2 className="w-12 h-12 text-purple-600 dark:text-purple-400 animate-spin relative z-10" />
         </div>
         <p className="text-xl font-medium text-purple-900 dark:text-purple-100 animate-pulse text-center max-w-md">{text}{dots}</p>
-        <p className="text-xs text-gray-500 uppercase tracking-widest">Consulting the Oracle</p>
+        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Consulting the Oracle</p>
     </div>
   );
 };
@@ -61,15 +61,26 @@ const DashboardPage: React.FC = () => {
   const [energyLevel, setEnergyLevel] = useState(3);
   const [lastLog, setLastLog] = useState<DailyLog | null>(null);
 
-  // Dynamic Background Styles based on Temperament (Ambient UI)
   const bgStyles = useMemo(() => {
     const temp = userData.temperament?.temperament?.toLowerCase() || '';
-    if (temp.includes('choleric')) return 'from-orange-950/20 via-black to-red-950/20'; // Fire
-    if (temp.includes('sanguine')) return 'from-cyan-950/20 via-black to-yellow-950/10'; // Air
-    if (temp.includes('melancholic')) return 'from-indigo-950/30 via-black to-purple-950/20'; // Earth
-    if (temp.includes('phlegmatic')) return 'from-emerald-950/20 via-black to-teal-950/20'; // Water
+    if (temp.includes('choleric')) return 'from-orange-950/20 via-black to-red-950/20';
+    if (temp.includes('sanguine')) return 'from-cyan-950/20 via-black to-yellow-950/10';
+    if (temp.includes('melancholic')) return 'from-indigo-950/30 via-black to-purple-950/20';
+    if (temp.includes('phlegmatic')) return 'from-emerald-950/20 via-black to-teal-950/20';
     return 'from-slate-900 via-black to-slate-900';
   }, [userData.temperament]);
+
+  const currentInitiationStep = useMemo(() => {
+    if (!userData.archetype) return 'personality';
+    if (!userData.temperament) return 'temperament';
+    if (!userData.ikigai) return 'ikigai';
+    if (!userData.synthesis) return 'synthesis';
+    return 'complete';
+  }, [userData]);
+
+  const nextStepModule = useMemo(() => {
+    return MODULES.find(m => m.id === currentInitiationStep);
+  }, [currentInitiationStep]);
 
   useEffect(() => {
     let unsubscribe: any;
@@ -110,16 +121,6 @@ const DashboardPage: React.FC = () => {
       if (uid) await saveUserProgress(uid, newData);
   };
 
-  const toggleNotifications = async () => {
-      if (!("Notification" in window)) return alert("Not supported.");
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-          const newState = !userData.notificationsEnabled;
-          setUserData({ ...userData, notificationsEnabled: newState });
-          await saveProgress({ notificationsEnabled: newState });
-      }
-  };
-
   const handleDailyReview = async () => {
     if (!reviewReport.trim()) return;
     setLoading(true);
@@ -153,22 +154,27 @@ const DashboardPage: React.FC = () => {
     setLoading(false);
   };
 
+  const handleBackToHub = () => {
+      setActiveModule(null);
+      setError(null);
+      setLoading(false); // Force clear stuck loaders
+  };
+
   const renderActiveModule = () => {
       if (loading) return <DynamicLoader text={loadingMessage} />;
-      const handleBack = () => { setActiveModule(null); setError(null); };
       
       switch(activeModule) {
           case 'personality':
-              return !userData.archetype ? <QuizView title="Personality" questions={PERSONALITY_QUESTIONS} onComplete={(a:any) => analyzePersonality(a.join('; '), '').then(r => r.success && (setUserData({...userData, archetype: r.data}), saveProgress({archetype: r.data})))} color="purple" icon={<Fingerprint className="text-purple-500"/>} /> : <ComprehensiveResultView title="Archetype Analysis" data={userData.archetype} color="purple" onNext={handleBack} onReset={() => saveProgress({archetype: null}).then(() => setUserData({...userData, archetype: null}))} />;
+              return !userData.archetype ? <QuizView title="Personality" questions={PERSONALITY_QUESTIONS} onComplete={(a:any) => { setLoading(true); analyzePersonality(a.join('; '), '').then(r => r.success && (setUserData({...userData, archetype: r.data}), saveProgress({archetype: r.data}))).finally(() => setLoading(false)); }} color="purple" icon={<Fingerprint className="text-purple-500"/>} /> : <ComprehensiveResultView title="Archetype Analysis" data={userData.archetype} color="purple" onNext={handleBackToHub} onReset={() => saveProgress({archetype: null}).then(() => setUserData({...userData, archetype: null}))} />;
           case 'temperament':
-              return !userData.temperament ? <QuizView title="Temperament" questions={TEMPERAMENT_QUESTIONS} onComplete={(a:any) => analyzeTemperament(a.join('; '), '').then(r => r.success && (setUserData({...userData, temperament: r.data}), saveProgress({temperament: r.data})))} color="cyan" icon={<Activity className="text-cyan-500"/>} /> : <ComprehensiveResultView title="Temperament Analysis" data={userData.temperament} color="cyan" onNext={handleBack} onReset={() => saveProgress({temperament: null}).then(() => setUserData({...userData, temperament: null}))} />;
+              return !userData.temperament ? <QuizView title="Temperament" questions={TEMPERAMENT_QUESTIONS} onComplete={(a:any) => { setLoading(true); analyzeTemperament(a.join('; '), '').then(r => r.success && (setUserData({...userData, temperament: r.data}), saveProgress({temperament: r.data}))).finally(() => setLoading(false)); }} color="cyan" icon={<Activity className="text-cyan-500"/>} /> : <ComprehensiveResultView title="Temperament Analysis" data={userData.temperament} color="cyan" onNext={handleBackToHub} onReset={() => saveProgress({temperament: null}).then(() => setUserData({...userData, temperament: null}))} />;
           case 'ikigai':
-              return !userData.ikigai ? <IkigaiForm onSubmit={(l:any,g:any,n:any,p:any) => generateIkigaiInsight(l,g,n,p).then(r => r.success && (setUserData({...userData, ikigai: r.data}), saveProgress({ikigai: r.data})))} /> : <ComprehensiveResultView title="Ikigai" data={userData.ikigai} color="pink" onNext={handleBack} onReset={() => saveProgress({ikigai: null}).then(() => setUserData({...userData, ikigai: null}))} />;
+              return !userData.ikigai ? <IkigaiForm onSubmit={(l:any,g:any,n:any,p:any) => { setLoading(true); generateIkigaiInsight(l,g,n,p).then(r => r.success && (setUserData({...userData, ikigai: r.data}), saveProgress({ikigai: r.data}))).finally(() => setLoading(false)); }} /> : <ComprehensiveResultView title="Ikigai" data={userData.ikigai} color="pink" onNext={handleBackToHub} onReset={() => saveProgress({ikigai: null}).then(() => setUserData({...userData, ikigai: null}))} />;
           case 'synthesis':
-              return !userData.synthesis ? <SynthesisForm onSubmit={(f:any) => generateLifeSynthesis({...userData, ...f}).then(r => r.success && (setUserData({...userData, ...f, synthesis: r.data}), saveProgress({...f, synthesis: r.data})))} data={userData} /> : <SynthesisResultView data={userData.synthesis} onBack={handleBack} onReset={() => saveProgress({synthesis: null}).then(() => setUserData({...userData, synthesis: null}))} />;
-          case 'mirror': return <MirrorChamberView profile={userData} onBack={handleBack} />;
-          case 'shadow': return !userData.shadowWork ? <ShadowReadinessView onGenerate={() => generateShadowWork(userData).then(res => res.success && setUserData({...userData, shadowWork: res.data}))} /> : <ShadowWorkView data={userData.shadowWork} onBack={handleBack} onReset={() => saveProgress({shadowWork: null}).then(() => setUserData({...userData, shadowWork: null}))} />;
-          case 'identity': return <IdentityView data={userData} onGenerate={() => generateNickname(userData.archetype?.archetype || 'Seeker').then(n => setUserData({...userData, nickname: n}))} onBack={handleBack} />;
+              return !userData.synthesis ? <SynthesisForm onSubmit={(f:any) => { setLoading(true); generateLifeSynthesis({...userData, ...f}).then(r => r.success && (setUserData({...userData, ...f, synthesis: r.data}), saveProgress({...f, synthesis: r.data}))).finally(() => setLoading(false)); }} data={userData} /> : <SynthesisResultView data={userData.synthesis} onBack={handleBackToHub} onReset={() => saveProgress({synthesis: null}).then(() => setUserData({...userData, synthesis: null}))} />;
+          case 'mirror': return <MirrorChamberView profile={userData} onBack={handleBackToHub} />;
+          case 'shadow': return !userData.shadowWork ? <ShadowReadinessView onGenerate={() => { setLoading(true); generateShadowWork(userData).then(res => res.success && setUserData({...userData, shadowWork: res.data})).finally(() => setLoading(false)); }} /> : <ShadowWorkView data={userData.shadowWork} onBack={handleBackToHub} onReset={() => saveProgress({shadowWork: null}).then(() => setUserData({...userData, shadowWork: null}))} />;
+          case 'identity': return <IdentityView data={userData} onGenerate={() => { setLoading(true); generateNickname(userData.archetype?.archetype || 'Seeker').then(n => setUserData({...userData, nickname: n})).finally(() => setLoading(false)); }} onBack={handleBackToHub} />;
           default: return null;
       }
   };
@@ -177,219 +183,181 @@ const DashboardPage: React.FC = () => {
     <div className={`min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 transition-all duration-1000 bg-gradient-to-br ${bgStyles}`}>
       <div className="max-w-6xl mx-auto">
         {!activeModule && (
-            <div className="mb-8 space-y-8 animate-fade-in">
-                {/* Hub Header */}
-                <div className="flex flex-col md:flex-row justify-between items-center bg-white/10 backdrop-blur-3xl p-6 rounded-[2.5rem] border border-white/10 shadow-2xl gap-4">
-                    <div className="text-center md:text-left">
-                        <h1 className="text-3xl font-serif font-bold mb-1 text-white">The Sanctuary Hub</h1>
-                        <p className="text-gray-400 text-xs font-medium tracking-wide">
-                            {userData.nickname || "Traveler"}, you have walked {userData.streakCount || 0} days on this path.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <button onClick={toggleNotifications} className={`p-4 rounded-2xl transition-all shadow-md ${userData.notificationsEnabled ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-500 opacity-60'}`}>
-                            {userData.notificationsEnabled ? <Bell className="w-6 h-6 animate-swing" /> : <BellOff className="w-6 h-6" />}
-                        </button>
-                        <div className="flex items-center gap-4 border-l border-white/10 pl-6">
-                            <div className="text-right hidden sm:block">
-                                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Streak</div>
-                                <div className="text-2xl font-bold text-orange-500">{userData.streakCount || 0} Days</div>
-                            </div>
-                            <div className={`w-14 h-14 rounded-2xl bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.4)] flex items-center justify-center text-white ${(userData.streakCount || 0) > 0 ? 'animate-pulse' : 'opacity-40 grayscale'}`}>
-                                <Flame className="w-8 h-8" />
+            <div className="mb-8 space-y-12 animate-fade-in">
+                {/* Simplified Header with Initiation Path */}
+                <div className="relative">
+                    <div className="flex flex-col md:flex-row justify-between items-center bg-white/5 backdrop-blur-3xl p-8 rounded-[3rem] border border-white/10 shadow-2xl gap-8">
+                        <div className="text-center md:text-left">
+                            <h1 className="text-4xl font-serif font-bold mb-2 text-white">The Sanctuary</h1>
+                            <p className="text-gray-400 text-sm font-medium">
+                                {userData.nickname || "Traveler"}, {currentInitiationStep === 'complete' ? "Your path is clear." : "Begin your initiation."}
+                            </p>
+                        </div>
+
+                        {/* Initiation Progress Map */}
+                        <div className="flex-1 max-w-xl w-full">
+                            <div className="flex justify-between relative mb-2">
+                                <div className="absolute top-1/2 left-0 w-full h-px bg-white/10 -translate-y-1/2 -z-10"></div>
+                                {['personality', 'temperament', 'ikigai', 'synthesis'].map((step, idx) => {
+                                    const isDone = !!userData[step];
+                                    const isCurrent = currentInitiationStep === step;
+                                    return (
+                                        <div key={step} className="flex flex-col items-center gap-2 group">
+                                            <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : isCurrent ? 'bg-purple-600 border-purple-600 text-white animate-pulse shadow-[0_0_20px_rgba(147,51,234,0.5)]' : 'bg-black border-white/20 text-white/30'}`}>
+                                                {isDone ? <Check className="w-4 h-4" /> : <span className="text-xs font-bold">{idx + 1}</span>}
+                                            </div>
+                                            <span className={`text-[10px] font-bold uppercase tracking-widest ${isDone ? 'text-emerald-500' : isCurrent ? 'text-white' : 'text-gray-600'}`}>{step.charAt(0)}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Growth Journey & Blueprint Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    {/* Blueprint Card */}
-                    <div className="lg:col-span-8 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden">
-                        <div className="bg-gradient-to-r from-purple-600/80 to-indigo-600/80 px-8 py-5 text-white flex justify-between items-center backdrop-blur-md">
-                            <div>
-                                <span className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-80">Today's Blueprint</span>
-                                <h2 className="text-xl font-serif font-bold">{dailyBlueprint?.theme || "Generating..."}</h2>
+                {/* Primary Action Focus for New Users */}
+                {currentInitiationStep !== 'complete' && (
+                    <div 
+                        onClick={() => setActiveModule(currentInitiationStep)}
+                        className="group relative cursor-pointer overflow-hidden rounded-[3rem] border border-white/20 bg-gradient-to-r from-purple-900/40 via-indigo-900/40 to-cyan-900/40 p-1 backdrop-blur-xl hover:scale-[1.01] transition-all shadow-2xl"
+                    >
+                        <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="flex flex-col md:flex-row items-center gap-8 p-8 md:p-12">
+                            <div className={`w-24 h-24 rounded-[2rem] bg-${nextStepModule?.color}-500/20 text-${nextStepModule?.color}-400 flex items-center justify-center shrink-0 shadow-inner border border-white/10 group-hover:rotate-12 transition-transform`}>
+                                {nextStepModule && <nextStepModule.icon className="w-10 h-10" />}
                             </div>
-                            <button onClick={() => setShowReviewForm(!showReviewForm)} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl backdrop-blur-md text-xs font-bold transition-colors">
-                                {showReviewForm ? "Return to Rites" : "Sunset Review"}
-                            </button>
+                            <div className="flex-1 text-center md:text-left">
+                                <span className={`text-xs font-bold uppercase tracking-[0.4em] text-${nextStepModule?.color}-400 mb-2 block`}>Immediate Rite</span>
+                                <h2 className="text-3xl md:text-5xl font-serif font-bold text-white mb-4">{nextStepModule?.title}</h2>
+                                <p className="text-gray-300 text-lg max-w-xl leading-relaxed italic">"{nextStepModule?.desc}. This step is required to unlock deeper chambers of the sanctuary."</p>
+                            </div>
+                            <div className="shrink-0 flex items-center justify-center w-20 h-20 rounded-full bg-white text-black group-hover:scale-110 transition-transform shadow-2xl">
+                                <ArrowIcon className="w-8 h-8" />
+                            </div>
                         </div>
+                    </div>
+                )}
 
-                        <div className="p-8">
-                            {showReviewForm ? (
-                                <div className="space-y-6 animate-fade-in">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-4">
-                                            <h3 className="font-bold flex items-center gap-2 text-white"><Moon className="w-5 h-5 text-orange-400"/> Reflect on your Day</h3>
-                                            <p className="text-xs text-gray-500">How did you stick to the Blueprint objective today?</p>
-                                            <textarea 
+                {/* Secondary Features - Conditionally unlocked/simplified */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* Daily Oracle / Reflection Card */}
+                    <div className="lg:col-span-8 space-y-8">
+                        {userData.archetype ? (
+                             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden">
+                                <div className="bg-gradient-to-r from-purple-600/80 to-indigo-600/80 px-8 py-5 text-white flex justify-between items-center">
+                                    <div>
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-80">Today's Objective</span>
+                                        <h2 className="text-xl font-serif font-bold">{dailyBlueprint?.theme || "Generating..."}</h2>
+                                    </div>
+                                    <button onClick={() => setShowReviewForm(!showReviewForm)} className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl backdrop-blur-md text-xs font-bold transition-colors">
+                                        {showReviewForm ? "Return" : "Sunset Review"}
+                                    </button>
+                                </div>
+                                <div className="p-8">
+                                    {showReviewForm ? (
+                                        <div className="animate-fade-in space-y-6">
+                                             <textarea 
                                                 value={reviewReport}
                                                 onChange={e => setReviewReport(e.target.value)}
-                                                placeholder="Write freely..."
-                                                className="w-full h-40 p-4 bg-black/40 border border-white/10 rounded-2xl text-sm text-white outline-none focus:ring-2 ring-purple-500 transition-all resize-none"
+                                                placeholder="What did you learn today?"
+                                                className="w-full h-32 p-4 bg-black/40 border border-white/10 rounded-2xl text-white outline-none focus:ring-2 ring-purple-500 transition-all resize-none"
                                             />
-                                        </div>
-                                        <div className="space-y-6">
-                                            <h3 className="font-bold flex items-center gap-2 text-white"><Activity className="w-5 h-5 text-cyan-400"/> Soul Energy State</h3>
-                                            <div className="p-6 bg-black/40 rounded-2xl border border-white/10 text-center">
-                                                <div className="flex justify-between mb-4">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex gap-2">
                                                     {[1,2,3,4,5].map(v => (
-                                                        <button 
-                                                            key={v} 
-                                                            onClick={() => setEnergyLevel(v)}
-                                                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${energyLevel === v ? 'bg-purple-600 text-white shadow-lg scale-110' : 'bg-white/5 text-gray-500'}`}
-                                                        >
-                                                            {v}
-                                                        </button>
+                                                        <button key={v} onClick={() => setEnergyLevel(v)} className={`w-8 h-8 rounded-full text-xs font-bold transition-all ${energyLevel === v ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/5 text-gray-500'}`}>{v}</button>
                                                     ))}
                                                 </div>
-                                                <p className="text-xs text-gray-500 font-medium">How much internal energy did you expend today?</p>
+                                                <button onClick={handleDailyReview} disabled={!reviewReport.trim()} className="px-8 py-3 bg-white text-black rounded-xl font-bold text-sm hover:scale-105 transition-all">Seal Reflection</button>
                                             </div>
-                                            <button 
-                                                onClick={handleDailyReview}
-                                                disabled={loading || !reviewReport.trim()}
-                                                className="w-full py-4 bg-white text-black rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                            >
-                                                {loading ? <Loader2 className="animate-spin"/> : <><Sparkles className="w-5 h-5"/> Archive Growth</>}
-                                            </button>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <BlueprintTask icon={<Coffee />} title="Morning" task={dailyBlueprint?.morning.task} color="orange" />
+                                            <BlueprintTask icon={<Sun />} title="Midday" task={dailyBlueprint?.afternoon.task} color="yellow" />
+                                            <BlueprintTask icon={<Sunset />} title="Evening" task={dailyBlueprint?.evening.task} color="indigo" />
+                                        </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="mb-6 p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Target className="w-4 h-4 text-purple-400" />
-                                            <span className="text-[10px] font-bold uppercase text-purple-400">Primary Rite</span>
+                             </div>
+                        ) : (
+                            <div className="bg-black/20 border border-dashed border-white/10 rounded-[3rem] p-12 text-center">
+                                <Sparkle className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                                <h3 className="text-xl font-serif font-bold text-white/40">Daily Rites are locked.</h3>
+                                <p className="text-gray-600 text-sm max-w-xs mx-auto">Complete the Personality Archetype initiation to receive your first daily blueprint.</p>
+                            </div>
+                        )}
+
+                        {/* Remaining Modules Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {MODULES.filter(m => m.id !== currentInitiationStep).map(m => {
+                                const isDone = !!userData[m.id];
+                                const isLocked = m.requiredFor ? !userData[m.requiredFor] : false;
+                                return (
+                                    <div 
+                                        key={m.id} 
+                                        onClick={() => !isLocked && setActiveModule(m.id)} 
+                                        className={`group p-6 rounded-[2.5rem] border transition-all cursor-pointer relative overflow-hidden ${isLocked ? 'opacity-40 grayscale pointer-events-none border-white/5' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:shadow-xl hover:-translate-y-1'}`}
+                                    >
+                                        <div className="flex justify-between items-center mb-4">
+                                            <div className={`p-3 rounded-2xl bg-${m.color}-500/20 text-${m.color}-400`}><m.icon className="w-5 h-5"/></div>
+                                            {isLocked ? <Lock className="w-4 h-4 text-gray-600"/> : isDone ? <Check className="w-4 h-4 text-emerald-500"/> : <Play className="w-4 h-4 text-white/20"/>}
                                         </div>
-                                        <p className="text-gray-200 text-sm font-medium italic">"{dailyBlueprint?.objective || 'The Oracle is speaking...'}"</p>
+                                        <h3 className="text-lg font-bold font-serif text-white">{m.title}</h3>
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">{isLocked ? `Unlock ${m.requiredFor} first` : m.desc}</p>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <BlueprintTask icon={<Coffee />} title="Morning" task={dailyBlueprint?.morning.task} color="orange" />
-                                        <BlueprintTask icon={<Sun />} title="Midday" task={dailyBlueprint?.afternoon.task} color="yellow" />
-                                        <BlueprintTask icon={<Sunset />} title="Reflection" task={dailyBlueprint?.evening.task} color="indigo" />
-                                    </div>
-                                    <div className="mt-8 p-4 bg-white/5 rounded-2xl flex items-center gap-4 border border-white/5">
-                                        <div className="p-3 bg-white/10 rounded-xl"><Info className="w-4 h-4 text-gray-400"/></div>
-                                        <div>
-                                            <div className="text-[10px] uppercase font-bold text-gray-500 mb-0.5">Mindset Shift</div>
-                                            <p className="text-xs text-gray-400">Move from <span className="text-rose-400 font-bold">{dailyBlueprint?.mindsetShift.from}</span> to <span className="text-emerald-400 font-bold">{dailyBlueprint?.mindsetShift.to}</span></p>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* Growth Timeline Card (Visual achievement progress) */}
-                    <div className="lg:col-span-4 bg-black/40 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden flex flex-col">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl"></div>
-                        <div className="flex items-center gap-2 mb-6">
-                            <TrendingUp className="w-5 h-5 text-cyan-400" />
-                            <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest">Growth Constellation</span>
+                    {/* History Sidebar */}
+                    <div className="lg:col-span-4 bg-black/40 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 flex flex-col min-h-[500px]">
+                        <div className="flex items-center gap-2 mb-8">
+                            <TrendingUp className="w-4 h-4 text-cyan-400" />
+                            <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Growth Archive</span>
                         </div>
                         
-                        {/* Spark Chart */}
-                        <div className="flex items-end justify-between h-16 gap-1 mb-6 px-1">
-                            {userData.dailyLogs && userData.dailyLogs.slice(0, 10).reverse().map((log: DailyLog, i: number) => (
-                                <div key={i} className="flex-1 group relative">
-                                    <div 
-                                        className="w-full bg-cyan-500/40 rounded-t-sm transition-all group-hover:bg-cyan-400 group-hover:scale-y-110" 
-                                        style={{ height: `${log.achievementScore}%` }}
-                                    ></div>
-                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-cyan-900 text-[8px] font-bold text-cyan-100 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
-                                        {log.achievementScore}%
-                                    </div>
-                                </div>
-                            ))}
-                            {(!userData.dailyLogs || userData.dailyLogs.length < 10) && Array.from({ length: 10 - (userData.dailyLogs?.length || 0) }).map((_, i) => (
-                                <div key={`empty-${i}`} className="flex-1 bg-white/5 h-1 rounded-full"></div>
-                            ))}
-                        </div>
-
-                        <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar">
                             {userData.dailyLogs && userData.dailyLogs.length > 0 ? (
                                 userData.dailyLogs.map((log: DailyLog, idx: number) => (
-                                    <div key={idx} className="p-4 bg-white/5 rounded-2xl border border-white/10 hover:border-cyan-500/30 transition-all group">
+                                    <div key={idx} className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/20 transition-all">
                                         <div className="flex justify-between items-center mb-2">
-                                            <span className="text-[10px] font-bold text-gray-500">{log.date}</span>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
-                                                <span className="text-[10px] font-bold text-cyan-400">{log.achievementScore}%</span>
-                                            </div>
+                                            <span className="text-[9px] font-bold text-gray-500">{log.date}</span>
+                                            <span className="text-[9px] font-bold text-emerald-400">{log.achievementScore}%</span>
                                         </div>
-                                        <h4 className="text-xs font-bold text-white mb-1">{log.blueprintTheme}</h4>
-                                        <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed italic">"{log.growthSummary}"</p>
+                                        <p className="text-[11px] text-gray-300 italic">"{log.growthSummary}"</p>
                                     </div>
                                 ))
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-12 opacity-30 text-center">
-                                    <History className="w-10 h-10 text-white mb-4" />
-                                    <p className="text-xs text-white">The constellations are aligning.<br/>Log your first day.</p>
+                                <div className="flex flex-col items-center justify-center py-20 opacity-20 text-center">
+                                    <History className="w-12 h-12 mb-4" />
+                                    <p className="text-xs uppercase tracking-widest font-bold">Archives Empty</p>
                                 </div>
                             )}
                         </div>
-                        {oracleReflection && !showReviewForm && (
-                            <div className="mt-6 pt-6 border-t border-white/10 animate-fade-in">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Sparkles className="w-3 h-3 text-purple-400"/>
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-purple-400">Oracle Rite</span>
-                                </div>
-                                <p className="text-xs text-gray-300 font-serif leading-relaxed italic">"{oracleReflection.dailyRite}"</p>
-                            </div>
-                        )}
                     </div>
-                </div>
-
-                {/* Modules Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {MODULES.map(m => {
-                        const done = userData[m.id];
-                        const locked = (m.id === 'temperament' && !userData.archetype) || (m.id === 'ikigai' && !userData.temperament) || (m.id === 'synthesis' && !userData.ikigai);
-                        return (
-                            <div key={m.id} onClick={() => !locked && setActiveModule(m.id)} className={`p-6 rounded-[2.5rem] border transition-all cursor-pointer group relative overflow-hidden ${locked ? 'opacity-40 bg-white/5 border-white/5' : 'hover:shadow-2xl hover:-translate-y-1 bg-white/10 backdrop-blur-xl border-white/10'}`}>
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className={`p-4 rounded-2xl bg-${m.color}-500/20 text-${m.color}-400 transition-transform group-hover:scale-110`}><m.icon className="w-6 h-6"/></div>
-                                    {locked ? <Lock className="w-5 h-5 text-gray-600"/> : done ? <Check className="w-5 h-5 text-emerald-500"/> : <Play className="w-5 h-5 text-purple-400 animate-pulse"/>}
-                                </div>
-                                <h3 className="text-xl font-bold font-serif mb-1 text-white">{m.title}</h3>
-                                <p className="text-xs text-gray-400 mb-4">{m.desc}</p>
-                                <span className={`text-[10px] font-bold uppercase tracking-widest text-${m.color}-400 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all`}>
-                                    {locked ? 'Locked' : done ? 'Review Analysis' : 'Begin Initiation'} <ChevronRight className="w-3 h-3"/>
-                                </span>
-                            </div>
-                        );
-                    })}
                 </div>
             </div>
         )}
         
         {activeModule && (
-            <div className="animate-fade-in max-w-4xl mx-auto bg-black/60 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl">
-                <button onClick={() => setActiveModule(null)} className="mb-8 flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-purple-400 uppercase tracking-[0.2em] transition-colors"><ArrowLeft className="w-4 h-4"/> Back to Sanctuary</button>
+            <div className="animate-fade-in max-w-4xl mx-auto bg-black/80 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl relative">
+                {/* Unified Close Button - Always Accessible */}
+                <button 
+                    onClick={handleBackToHub} 
+                    className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all hover:rotate-90 z-50 group"
+                    aria-label="Close module"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+                
+                <button onClick={handleBackToHub} className="mb-8 flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-purple-400 uppercase tracking-[0.2em] transition-colors"><ArrowLeft className="w-4 h-4"/> Return to Hub</button>
+                
                 {renderActiveModule()}
             </div>
         )}
       </div>
-      <style>{`
-          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-          @keyframes swing {
-              0%, 100% { transform: rotate(0); }
-              20% { transform: rotate(15deg); }
-              40% { transform: rotate(-10deg); }
-              60% { transform: rotate(5deg); }
-              80% { transform: rotate(-5deg); }
-          }
-          .animate-swing { animation: swing 2s ease-in-out infinite; }
-          
-          @keyframes mirror-pulse {
-              0%, 100% { transform: scale(1); opacity: 0.1; }
-              50% { transform: scale(1.05); opacity: 0.2; }
-          }
-          .animate-mirror { animation: mirror-pulse 4s ease-in-out infinite; }
-      `}</style>
     </div>
   );
 };
@@ -428,7 +396,7 @@ const MirrorChamberView = ({ profile, onBack }: { profile: any, onBack: () => vo
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-indigo-500 rounded-full blur-3xl opacity-20 animate-mirror"></div>
                 <div className="inline-flex p-4 rounded-full bg-indigo-500/10 text-indigo-400 mb-4 shadow-[0_0_20px_rgba(99,102,241,0.2)]"><Eye className="w-8 h-8"/></div>
                 <h3 className="text-3xl font-serif font-bold text-white">The Mirror Chamber</h3>
-                <p className="text-xs text-gray-500 uppercase tracking-[0.3em] mt-2">Where the ego dissolves</p>
+                <p className="text-xs text-gray-500 uppercase tracking-[0.3em] mt-2 font-bold">Where the ego dissolves</p>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-6 pr-4 mb-6 custom-scrollbar pb-10">
@@ -446,9 +414,6 @@ const MirrorChamberView = ({ profile, onBack }: { profile: any, onBack: () => vo
                             </div>
                         ) : (
                             <div className="max-w-[85%] p-6 bg-indigo-950/30 backdrop-blur-xl border border-indigo-500/20 rounded-3xl rounded-tl-none space-y-4 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
-                                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-indigo-400 font-bold mb-1">
-                                    <RotateCcw className="w-3 h-3" /> Reflection
-                                </div>
                                 <p className="text-sm font-serif italic text-indigo-100/70">"... {m.reflection}"</p>
                                 <div className="h-px bg-indigo-500/20 w-12"></div>
                                 <p className="text-lg font-bold text-indigo-300 leading-relaxed font-serif">{m.question}</p>
@@ -471,7 +436,7 @@ const MirrorChamberView = ({ profile, onBack }: { profile: any, onBack: () => vo
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSend()}
-                    placeholder="I feel that I am losing focus..."
+                    placeholder="Reflect here..."
                     className="w-full p-5 pl-6 pr-16 bg-black/40 border border-white/10 rounded-[2rem] text-white outline-none focus:ring-2 ring-indigo-500/50 transition-all text-sm placeholder:text-gray-600"
                 />
                 <button 
@@ -497,13 +462,31 @@ const BlueprintTask = ({ icon, title, task, color }: any) => (
 );
 
 const PERSONALITY_QUESTIONS = [
-    { id: 1, text: "Exhausting week: How to recharge?", options: ["Friends & Fun", "Solitude & Book", "New Streets", "Productive Projects"] },
-    { id: 2, text: "First look at art?", options: ["Details/Technique", "Mood/Meaning", "Skill Level", "Personal Feeling"] },
-    { id: 3, text: "Friend's dilemma?", options: ["Logic Solution", "Emotional Support", "Deep Context", "Fun Distraction"] }
+    { id: 1, text: "A chaotic week ends. How do you truly reset your soul?", options: ["Gathering friends for loud celebration", "A quiet room, a book, and no noise", "Walking through a new, unknown street", "Organizing my desk and planning next week"] },
+    { id: 2, text: "When facing a new project, what is your first instinct?", options: ["Visualizing the grand, final impact", "Listing the concrete steps to take", "Brainstorming infinite possibilities", "Analyzing potential risks and errors"] },
+    { id: 3, text: "In a deep conversation, you tend to focus more on:", options: ["The underlying meaning and subtext", "The practical facts and literal words", "How the other person is feeling", "The logic and consistency of the argument"] },
+    { id: 4, text: "Your ideal daily schedule is best described as:", options: ["A loose guide with room for inspiration", "A meticulously timed series of blocks", "Spontaneous bursts of hyper-focus", "Reliable routines that never change"] },
+    { id: 5, text: "When a friend is in distress, your first response is to:", options: ["Offer immediate emotional warmth", "Problem-solve with objective logic", "Give them space to process alone", "Distract them with a change of scenery"] },
+    { id: 6, text: "How do you view 'the rules' of society or work?", options: ["Essential structures for stability", "Suggestions that can be optimized", "Obstacles to true creative freedom", "Fair tools that should apply to everyone"] },
+    { id: 7, text: "If you were to learn a new complex skill, you'd prefer:", options: ["Watching a master and imitating", "Reading the manual cover to cover", "Trial and error through doing", "Mapping the theory behind why it works"] },
+    { id: 8, text: "Your biggest internal struggle is often:", options: ["Over-thinking every minor detail", "Acting on impulse without a plan", "Worrying about what others think", "Feeling detached from the real world"] },
+    { id: 9, text: "In a group setting, you usually find yourself:", options: ["Leading the charge and delegating", "Quietly observing the dynamics", "Ensuring everyone feels included", "Challenging ideas to find the truth"] },
+    { id: 10, text: "When you receive criticism, you mostly:", options: ["Take it personally and feel hurt", "Analyze it for practical use-cases", "Defend your vision and core intent", "Ignore it if it lacks logical merit"] },
+    { id: 11, text: "How do you define personal success?", options: ["Impact and influence on the world", "Internal peace and self-mastery", "Security and comfort for loved ones", "Infinite growth and learning"] },
+    { id: 12, text: "Your mind is naturally more like:", options: ["A library of facts and memories", "A web of patterns and connections", "A heart that mirrors others' needs", "A machine that seeks maximum efficiency"] }
 ];
+
 const TEMPERAMENT_QUESTIONS = [
-    { id: 1, text: "Natural Energy Levels?", options: ["High/Active", "Bursts/Dips", "Steady/Calm", "Reserved/Low-key"] },
-    { id: 2, text: "Sudden Problems?", options: ["Angry Action", "Optimistic Fluster", "Deep Analysis", "Wait & See"] }
+    { id: 1, text: "Your natural energy level upon waking is usually:", options: ["Instantly high and ready for action", "A slow build-up over several hours", "Dependent entirely on my mood", "Steady, calm, and unchanging"] },
+    { id: 2, text: "When you get angry or frustrated, the emotion:", options: ["Explodes quickly and fades fast", "Smolders for a long time internally", "Is rare; I rarely get truly upset", "Makes me want to cry or withdraw"] },
+    { id: 3, text: "Your typical speed of talking or moving is:", options: ["Fast, energetic, and sometimes hurried", "Moderate, deliberate, and controlled", "Slow, relaxed, and rhythmic", "Unpredictable; I alternate extremes"] },
+    { id: 4, text: "How do you handle long periods of waiting?", options: ["I get restless and start pacing", "I use the time to think or plan", "I remain patient and unbothered", "I feel drained and slightly anxious"] },
+    { id: 5, text: "Your social baseline is more like:", options: ["The life of the party, talking to everyone", "Selective; a few deep connections", "The observer, listening from the edge", "The peacemaker, avoiding any friction"] },
+    { id: 6, text: "When working on a repetitive task, you:", options: ["Get bored and seek a new challenge", "Find a rhythm and stick to it", "Do it perfectly but feel exhausted", "Don't mind; it's relaxing for me"] },
+    { id: 7, text: "Your memory for emotional events is:", options: ["I forget the bad stuff very quickly", "I remember every detail of the hurt", "I remember the lesson, not the feel", "I feel the emotion all over again"] },
+    { id: 8, text: "If someone cuts you off in traffic, you likely:", options: ["Shout or gesture in immediate heat", "Analyze why they are such a bad driver", "Don't even notice or care much", "Feel startled and a bit shaken up"] },
+    { id: 9, text: "Your favorite type of environment is:", options: ["Vibrant, colorful, and active", "Minimalist, quiet, and organized", "Cozy, soft, and comfortable", "Vast, open, and natural"] },
+    { id: 10, text: "When you are stressed, you physically:", options: ["Need to run, move, or do something", "Get a headache or stiff shoulders", "Need to sleep or lie down immediately", "Want to eat or find physical comfort"] }
 ];
 
 const QuizView = ({ questions, onComplete, color, icon }: any) => {
@@ -522,7 +505,7 @@ const QuizView = ({ questions, onComplete, color, icon }: any) => {
             <h4 className="text-xl font-serif font-bold text-white">{questions[idx].text}</h4>
             <div className="grid gap-3">
                 {questions[idx].options.map((o:string) => (
-                    <button key={o} onClick={() => sel(o)} className="p-5 text-left border border-white/10 rounded-2xl bg-white/5 hover:bg-white/10 transition-all text-sm font-medium text-white">
+                    <button key={o} onClick={() => sel(o)} className="p-5 text-left border border-white/10 rounded-2xl bg-white/5 hover:bg-white/10 transition-all text-sm font-medium text-white shadow-sm">
                         {o}
                     </button>
                 ))}
@@ -539,16 +522,16 @@ const ComprehensiveResultView = ({ title, data, color, onNext, onReset }: any) =
         <div className="p-8 bg-white/5 border border-white/5 rounded-[2rem] text-base leading-relaxed text-gray-300 italic">"{data.description || data.insight}"</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
             <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
-                <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-4">Core Strengths</h4>
+                <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-4 font-bold">Core Strengths</h4>
                 <ul className="space-y-2">{data.strengths?.map((s:string) => <li key={s} className="text-xs font-medium text-gray-300 flex gap-2"><Check className="w-3 h-3 text-emerald-500 shrink-0"/>{s}</li>)}</ul>
             </div>
             <div className="p-6 bg-rose-500/5 border border-rose-500/20 rounded-2xl">
-                <h4 className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-4">Shadow Paths</h4>
+                <h4 className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-4 font-bold">Shadow Paths</h4>
                 <ul className="space-y-2">{(data.shadowSide || data.stressTriggers || data.weaknesses)?.map((s:string) => <li key={s} className="text-xs font-medium text-gray-300 flex gap-2"><Minus className="w-3 h-3 text-rose-400 shrink-0"/>{s}</li>)}</ul>
             </div>
         </div>
         <div className="flex gap-4 pt-6">
-            <button onClick={onNext} className="flex-1 py-4 bg-white text-black rounded-2xl font-bold shadow-xl shadow-white/5">Return to Hub</button>
+            <button onClick={onNext} className="flex-1 py-4 bg-white text-black rounded-2xl font-bold shadow-xl shadow-white/5 hover:scale-105 transition-all">Integrate Analysis</button>
             <button onClick={onReset} className="px-6 py-4 border border-white/10 rounded-2xl font-bold text-gray-500 hover:text-white transition-colors">Re-evaluate</button>
         </div>
     </div>
@@ -565,7 +548,7 @@ const IkigaiForm = ({ onSubmit }: any) => {
                 <textarea value={f.n} onChange={e => setF({...f, n:e.target.value})} placeholder="What does the WORLD NEED?" className="w-full p-4 border border-white/10 rounded-2xl bg-black/40 text-white text-sm h-24 outline-none focus:ring-2 ring-emerald-500" />
                 <textarea value={f.p} onChange={e => setF({...f, p:e.target.value})} placeholder="What can you be PAID FOR?" className="w-full p-4 border border-white/10 rounded-2xl bg-black/40 text-white text-sm h-24 outline-none focus:ring-2 ring-orange-500" />
             </div>
-            <button onClick={() => onSubmit(f.l, f.g, f.n, f.p)} className="w-full py-5 bg-white text-black rounded-2xl font-bold shadow-xl">Align Compass</button>
+            <button onClick={() => onSubmit(f.l, f.g, f.n, f.p)} className="w-full py-5 bg-white text-black rounded-2xl font-bold shadow-xl hover:scale-105 transition-all">Align Compass</button>
         </div>
     );
 };
@@ -575,7 +558,7 @@ const SynthesisForm = ({ onSubmit, data }: any) => {
     const [f, setF] = useState({ age: data.age || '', principles: data.principles || '', likes: data.likes || '', dislikes: data.dislikes || '', region: data.region || '', religion: data.religion || '' });
     return (
         <div className="space-y-8 animate-fade-in max-w-lg mx-auto">
-            <div className="text-center"><h3 className="text-3xl font-serif font-bold text-white">The Grand Synthesis</h3><p className="text-xs text-gray-500 uppercase tracking-widest mt-2">Merging trait data into strategy</p></div>
+            <div className="text-center"><h3 className="text-3xl font-serif font-bold text-white">The Grand Synthesis</h3><p className="text-xs text-gray-500 uppercase tracking-widest mt-2 font-bold">Merging trait data into strategy</p></div>
             {step === 1 ? (
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -583,14 +566,14 @@ const SynthesisForm = ({ onSubmit, data }: any) => {
                         <input value={f.region} onChange={e => setF({...f, region:e.target.value})} placeholder="Habitat" className="p-4 border border-white/10 rounded-xl bg-black/40 text-white text-sm outline-none focus:ring-2 ring-indigo-500" />
                     </div>
                     <input value={f.religion} onChange={e => setF({...f, religion:e.target.value})} placeholder="Guiding Philosophy" className="w-full p-4 border border-white/10 rounded-xl bg-black/40 text-white text-sm outline-none focus:ring-2 ring-indigo-500" />
-                    <button onClick={() => setStep(2)} className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold">Next</button>
+                    <button onClick={() => setStep(2)} className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-500 transition-all">Next</button>
                 </div>
             ) : (
                 <div className="space-y-4">
                     <textarea value={f.likes} onChange={e => setF({...f, likes:e.target.value})} placeholder="Core Pleasures" className="w-full p-4 border border-white/10 rounded-xl bg-black/40 text-white text-sm h-20 outline-none focus:ring-2 ring-indigo-500" />
                     <textarea value={f.dislikes} onChange={e => setF({...f, dislikes:e.target.value})} placeholder="Core Frictions" className="w-full p-4 border border-white/10 rounded-xl bg-black/40 text-white text-sm h-20 outline-none focus:ring-2 ring-indigo-500" />
                     <textarea value={f.principles} onChange={e => setF({...f, principles:e.target.value})} placeholder="Inviolable Principles" className="w-full p-4 border border-white/10 rounded-xl bg-black/40 text-white text-sm h-24 outline-none focus:ring-2 ring-indigo-500" />
-                    <button onClick={() => onSubmit(f)} className="w-full py-4 bg-white text-black rounded-xl font-bold">Generate Master Roadmap</button>
+                    <button onClick={() => onSubmit(f)} className="w-full py-4 bg-white text-black rounded-xl font-bold shadow-lg hover:scale-105 transition-all">Generate Master Roadmap</button>
                 </div>
             )}
         </div>
@@ -602,7 +585,6 @@ const SynthesisResultView = ({ data, onBack, onReset }: any) => (
         <div className="text-center space-y-6">
             <h3 className="text-4xl font-serif font-bold text-white">The Unfolding Path</h3>
             <div className="p-8 bg-white/10 backdrop-blur-3xl text-white rounded-[2.5rem] italic font-serif text-2xl shadow-2xl relative border border-white/10">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-10 -mt-10"></div>
                 "{data.mantra}"
             </div>
         </div>
@@ -617,7 +599,7 @@ const SynthesisResultView = ({ data, onBack, onReset }: any) => (
             </div>
         </div>
         <div className="space-y-4 pt-4 text-white">
-            <h4 className="text-xs font-bold uppercase tracking-[0.3em] text-gray-500 text-center mb-6">Evolutionary Phases</h4>
+            <h4 className="text-xs font-bold uppercase tracking-[0.3em] text-gray-500 text-center mb-6 font-bold">Evolutionary Phases</h4>
             {data.roadmap?.map((p: any, i: number) => (
                 <div key={i} className="flex gap-6 items-start group">
                     <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center font-bold text-sm shrink-0 transition-transform group-hover:scale-110 shadow-lg">{i+1}</div>
@@ -634,7 +616,7 @@ const SynthesisResultView = ({ data, onBack, onReset }: any) => (
             ))}
         </div>
         <div className="flex gap-4 pt-10">
-            <button onClick={onBack} className="flex-1 py-5 bg-white text-black rounded-2xl font-bold">Return to Sanctuary</button>
+            <button onClick={onBack} className="flex-1 py-5 bg-white text-black rounded-2xl font-bold hover:scale-105 transition-all">Return to Sanctuary</button>
             <button onClick={onReset} className="px-8 py-5 border border-white/10 rounded-2xl font-bold text-gray-500">Recalculate</button>
         </div>
     </div>
@@ -645,7 +627,7 @@ const ShadowReadinessView = ({ onGenerate }: any) => (
         <div className="p-6 bg-white/5 border border-white/10 rounded-full w-24 h-24 flex items-center justify-center mx-auto shadow-2xl"><Ghost className="w-12 h-12 text-gray-400 animate-pulse"/></div>
         <div>
             <h2 className="text-3xl font-serif font-bold mb-3">Entering the Shadow</h2>
-            <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed uppercase tracking-widest">Integrating the parts of yourself currently in darkness.</p>
+            <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed uppercase tracking-widest font-bold">Integrating the parts of yourself currently in darkness.</p>
         </div>
         <button onClick={onGenerate} className="px-12 py-4 bg-white text-black rounded-2xl font-bold text-sm hover:scale-105 transition-all shadow-xl">Reveal Shadow Portrait</button>
     </div>
@@ -658,7 +640,6 @@ const ShadowWorkView = ({ data, onBack, onReset }: any) => (
             <h3 className="text-4xl font-serif font-bold">The Shadow Portrait</h3>
         </div>
         <div className="p-8 bg-black/40 backdrop-blur-3xl rounded-[2.5rem] space-y-6 shadow-2xl relative overflow-hidden border border-white/10">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10"></div>
             <h4 className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-bold border-b border-white/5 pb-4">Repressed Traits</h4>
             <ul className="grid grid-cols-2 gap-4">{data.shadowTraits?.map((t:string) => <li key={t} className="text-sm font-serif italic text-gray-300 flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-gray-500"/>{t}</li>)}</ul>
         </div>
@@ -669,7 +650,7 @@ const ShadowWorkView = ({ data, onBack, onReset }: any) => (
             </div>
         </div>
         <div className="flex gap-4 pt-6">
-            <button onClick={onBack} className="flex-1 py-4 bg-white text-black rounded-2xl font-bold">Exit Chamber</button>
+            <button onClick={onBack} className="flex-1 py-4 bg-white text-black rounded-2xl font-bold hover:scale-105 transition-all">Exit Chamber</button>
             <button onClick={onReset} className="px-6 py-4 border border-white/10 rounded-2xl font-bold text-gray-500">Re-evaluate</button>
         </div>
     </div>
@@ -689,8 +670,8 @@ const IdentityView = ({ data, onGenerate, onBack }: any) => (
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="w-24 h-24 bg-white/10 rounded-full mx-auto mb-8 flex items-center justify-center text-4xl font-serif shadow-inner relative z-10 border border-white/20">{(data.nickname || 'S')[0]}</div>
                 <h4 className="text-3xl font-serif font-bold mb-2 relative z-10">{data.nickname}</h4>
-                <p className="text-[10px] uppercase tracking-[0.4em] text-purple-400 relative z-10">{data.archetype?.archetype || 'The Seeker'}</p>
-                <div className="mt-10 pt-10 border-t border-white/10 text-[9px] uppercase tracking-[0.3em] opacity-30 relative z-10">Sanctuary Node: {new Date().getFullYear()}</div>
+                <p className="text-[10px] uppercase tracking-[0.4em] text-purple-400 relative z-10 font-bold">{data.archetype?.archetype || 'The Seeker'}</p>
+                <div className="mt-10 pt-10 border-t border-white/10 text-[9px] uppercase tracking-[0.3em] opacity-30 relative z-10 font-bold">Sanctuary Node: {new Date().getFullYear()}</div>
             </div>
         )}
         <button onClick={onBack} className="text-xs text-gray-500 underline uppercase tracking-widest font-bold hover:text-white transition-colors">Return to Hub</button>

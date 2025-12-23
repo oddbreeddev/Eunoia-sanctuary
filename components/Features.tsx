@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Brain, Compass, Users, Fingerprint, Activity, X, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { FeatureCardProps } from '../types';
@@ -53,53 +54,54 @@ interface FeatureModalProps {
 
 const FeatureModal: React.FC<FeatureModalProps> = ({ feature, onClose }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto">
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md animate-fade-in"
         onClick={onClose}
       ></div>
-      <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-8 md:p-12 animate-float transform transition-all">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/20 rounded-[2.5rem] shadow-2xl p-8 md:p-12 animate-float transform transition-all z-[110]">
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-500 dark:text-gray-400"
+          className="absolute top-6 right-6 p-3 bg-gray-100 dark:bg-white/10 rounded-full hover:bg-gray-200 dark:hover:bg-white/20 transition-all text-gray-600 dark:text-white hover:rotate-90 shadow-lg"
+          aria-label="Close modal"
         >
           <X className="w-6 h-6" />
         </button>
 
-        <div className="flex items-center gap-4 mb-6">
-          <div className="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-xl">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-2xl shadow-inner">
             {React.cloneElement(feature.icon as React.ReactElement, { className: "w-8 h-8 text-purple-600 dark:text-purple-400" })}
           </div>
-          <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{feature.title}</h3>
+          <h3 className="text-3xl font-bold text-gray-900 dark:text-white font-serif tracking-tight">{feature.title}</h3>
         </div>
 
         <div className="prose dark:prose-invert max-w-none">
-          <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+          <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-8 italic font-serif">
             {feature.details || feature.description}
           </p>
           
-          <div className="bg-gray-50 dark:bg-black/20 rounded-xl p-6 border border-gray-100 dark:border-white/5">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Key Benefits</h4>
-            <ul className="space-y-3">
+          <div className="bg-gray-50 dark:bg-white/5 rounded-3xl p-8 border border-gray-100 dark:border-white/10 shadow-inner">
+            <h4 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-[0.3em] mb-6 opacity-60">Key Benefits</h4>
+            <ul className="space-y-4">
               {[1, 2, 3].map((_, i) => (
-                <li key={i} className="flex items-start gap-3 text-gray-600 dark:text-gray-400 text-sm">
-                   <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                   <span>
-                     {i === 0 && "Personalized insights based on your unique data."}
-                     {i === 1 && "Actionable steps to improve your daily life."}
-                     {i === 2 && "Integration with our community mentorship program."}
+                <li key={i} className="flex items-start gap-4 text-gray-700 dark:text-gray-300">
+                   <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0 shadow-sm" />
+                   <span className="text-sm font-medium leading-relaxed">
+                     {i === 0 && "Personalized insights generated via high-density cognitive analysis."}
+                     {i === 1 && "Daily blueprints and actionable growth roadmaps tailored to your rhythm."}
+                     {i === 2 && "Direct integration with the Mirror Chamber and Sanctuary Mentors."}
                    </span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="mt-8 flex justify-end">
+          <div className="mt-10 flex justify-center">
             <button 
               onClick={onClose}
-              className="px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full font-medium hover:opacity-90 transition-opacity"
+              className="px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-bold hover:scale-105 transition-all shadow-xl"
             >
-              Got it
+              Continue Journey
             </button>
           </div>
         </div>
@@ -115,8 +117,8 @@ const Features: React.FC = () => {
     <section id="features" className="py-24 bg-gray-50/50 dark:bg-black/20 relative transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-sm font-semibold text-purple-600 dark:text-cyan-400 tracking-widest uppercase mb-3">The Blueprint</h2>
-          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Tools for the Modern Seeker</h3>
+          <h2 className="text-xs font-bold text-purple-600 dark:text-cyan-400 tracking-[0.4em] uppercase mb-4">The Blueprint</h2>
+          <h3 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white font-serif">Tools for the Modern Seeker</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
