@@ -1,4 +1,3 @@
-
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -10,9 +9,11 @@ export default defineConfig(({ mode }) => {
     base: '/',
     plugins: [react()],
     define: {
-      // Use specific string replacements to avoid breaking global process.env access
       'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
       'process.env.FIREBASE_API_KEY': JSON.stringify(env.FIREBASE_API_KEY || ''),
+    },
+    esbuild: {
+      drop: mode === 'production' ? ['console', 'debugger'] : [],
     },
     build: {
       outDir: 'dist',
@@ -21,14 +22,7 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       cssCodeSplit: true,
       chunkSizeWarningLimit: 1000,
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-          pure_funcs: ['console.debug', 'console.info'],
-        },
-      },
+      minify: 'esbuild',
       rollupOptions: {
         output: {
           manualChunks: {
