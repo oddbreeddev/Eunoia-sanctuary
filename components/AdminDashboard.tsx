@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Users, MessageSquare, Settings, LogOut, 
@@ -384,7 +385,7 @@ const AdminDashboard: React.FC = () => {
                               <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-2">
                                   <div className="flex items-center gap-3">
                                       <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-purple-700 dark:text-purple-300 font-bold shrink-0">
-                                          {msg.name.charAt(0)}
+                                          {(msg.name || '?').charAt(0)}
                                       </div>
                                       <div className="overflow-hidden">
                                           <h4 className="font-bold text-gray-900 dark:text-white truncate">{msg.name}</h4>

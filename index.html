@@ -3,16 +3,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Eunoia | Sanctuary of Self</title>
-    <meta name="description" content="A mystical sanctuary for self-discovery and depth psychology insights.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Eunoia | Sanctuary of Self-Discovery</title>
+    
+    <!-- SEO & Social Meta Tags -->
+    <meta name="description" content="A mystical sanctuary for self-discovery, depth psychology insights, and personalized life strategy powered by Gemini 3.">
+    <meta name="keywords" content="psychology, self-discovery, archetypes, ikigai, temperament, personal growth, AI mentor">
+    <meta property="og:title" content="Eunoia | Sanctuary of Self">
+    <meta property="og:description" content="Discover your inner universe. Depth psychology meets cutting-edge AI.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#7c3aed">
+    
+    <!-- PWA & Mobile Readiness -->
     <link rel="manifest" href="/metadata.json" />
-    <link rel="apple-touch-icon" href="/metadata.json" />
+    <link rel="apple-touch-icon" href="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=180&auto=format&fit=crop" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -25,6 +39,7 @@
             animation: {
               'fade-in': 'fadeIn 0.5s ease-out',
               'float': 'float 6s ease-in-out infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             },
             keyframes: {
               fadeIn: {
@@ -41,24 +56,40 @@
       }
     </script>
     <style>
+      ::selection {
+        background-color: rgba(124, 58, 237, 0.3);
+        color: white;
+      }
+      
       ::-webkit-scrollbar {
-        width: 8px;
+        width: 6px;
       }
       ::-webkit-scrollbar-track {
         background: transparent; 
       }
       ::-webkit-scrollbar-thumb {
         background: #94a3b8; 
-        border-radius: 4px;
+        border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #64748b; 
+        background: #7c3aed; 
       }
       .dark ::-webkit-scrollbar-thumb {
-        background: #334155;
+        background: #1e1b4b;
+        border: 1px solid rgba(255,255,255,0.05);
       }
+      
       body {
         overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+      
+      .rotate-y-12 {
+        transform: rotateY(12deg);
       }
     </style>
   <script type="importmap">
@@ -77,7 +108,7 @@
 }
 </script>
 </head>
-  <body>
+  <body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

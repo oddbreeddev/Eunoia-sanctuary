@@ -7,6 +7,14 @@ import {
 import { db, isMockMode } from "./firebaseConfig";
 
 // --- TYPES ---
+export interface DailyLog {
+  date: string;
+  blueprintTheme: string;
+  userReport: string;
+  growthSummary: string;
+  achievementScore: number;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -21,6 +29,19 @@ export interface UserProfile {
   bio?: string;
   pronouns?: string;
   location?: string;
+  // Deep Personalization Fields
+  likes?: string;
+  dislikes?: string;
+  region?: string;
+  religion?: string;
+  age?: string;
+  principles?: string;
+  // Growth Tracking
+  streakCount: number;
+  lastReflectionDate?: string; // ISO string
+  dailyLogs: DailyLog[];
+  // Reminders
+  notificationsEnabled: boolean;
 }
 
 export interface Mentor {
@@ -89,31 +110,23 @@ export const updateUserProfile = async (id: string, data: Partial<UserProfile>):
     catch (e) { return false; }
 }
 
-export const deleteUserOp = async (id: string): Promise<boolean> => {
-  if (!db || isMockMode) { saveMockUsersDB(getMockUsersDB().filter(u => u.id !== id)); return true; }
-  try { await deleteDoc(doc(db, "users", id)); return true; }
-  catch (error) { return false; }
-};
-
-export const toggleUserStatusOp = async (id: string, currentStatus: string): Promise<boolean> => {
-  const newStatus = currentStatus === 'Active' ? 'Banned' : 'Active';
-  if (!db || isMockMode) {
-    const users = getMockUsersDB();
-    const u = users.find(u => u.id === id);
-    if (u) { u.status = newStatus; saveMockUsersDB(users); }
-    return true;
-  }
-  try { await updateDoc(doc(db, "users", id), { status: newStatus }); return true; }
-  catch (error) { return false; }
-};
-
 export const saveUserProgress = async (userId: string, data: Partial<UserProfile>) => {
   if (!userId) return;
   if (!db || isMockMode) {
      const users = getMockUsersDB();
      const idx = users.findIndex(u => u.id === userId);
      if (idx >= 0) users[idx] = { ...users[idx], ...data };
-     else users.push({ id: userId, name: 'User', email: 'user@example.com', joinedDate: new Date().toLocaleDateString(), status: 'Active', ...data } as UserProfile);
+     else users.push({ 
+       id: userId, 
+       name: 'User', 
+       email: 'user@example.com', 
+       joinedDate: new Date().toLocaleDateString(), 
+       status: 'Active',
+       streakCount: 0,
+       dailyLogs: [],
+       notificationsEnabled: false,
+       ...data 
+     } as UserProfile);
      saveMockUsersDB(users);
      return;
   }
@@ -121,11 +134,42 @@ export const saveUserProgress = async (userId: string, data: Partial<UserProfile
   catch (error) { throw error; }
 };
 
-const getMockMentorsDB = (): Mentor[] => loadLocal('eunoia_mentors_db', []);
-const saveMockMentorsDB = (mentors: Mentor[]) => saveLocal('eunoia_mentors_db', mentors);
+export const deleteUserOp = async (id: string): Promise<boolean> => {
+  if (!db || isMockMode) {
+    const users = getMockUsersDB();
+    saveMockUsersDB(users.filter(u => u.id !== id));
+    return true;
+  }
+  try {
+    await deleteDoc(doc(db, "users", id));
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const toggleUserStatusOp = async (id: string, currentStatus: string): Promise<boolean> => {
+  const newStatus = currentStatus === 'Active' ? 'Banned' : 'Active';
+  if (!db || isMockMode) {
+    const users = getMockUsersDB();
+    const idx = users.findIndex(u => u.id === id);
+    if (idx !== -1) {
+      users[idx].status = newStatus as 'Active' | 'Banned';
+      saveMockUsersDB(users);
+      return true;
+    }
+    return false;
+  }
+  try {
+    await updateDoc(doc(db, "users", id), { status: newStatus });
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 export const fetchMentors = async (): Promise<Mentor[]> => {
-  if (!db || isMockMode) return getMockMentorsDB();
+  if (!db || isMockMode) return loadLocal('eunoia_mentors_db', []);
   try {
     const querySnapshot = await getDocs(collection(db, "mentors"));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Mentor));
@@ -134,9 +178,9 @@ export const fetchMentors = async (): Promise<Mentor[]> => {
 
 export const addMentorOp = async (mentor: Omit<Mentor, 'id'>): Promise<Mentor | null> => {
   if (!db || isMockMode) {
-    const mentors = getMockMentorsDB();
+    const mentors = loadLocal<Mentor[]>('eunoia_mentors_db', []);
     const newMentor = { ...mentor, id: Date.now().toString() };
-    mentors.push(newMentor); saveMockMentorsDB(mentors);
+    mentors.push(newMentor); saveLocal('eunoia_mentors_db', mentors);
     return newMentor;
   }
   try {
@@ -146,20 +190,20 @@ export const addMentorOp = async (mentor: Omit<Mentor, 'id'>): Promise<Mentor | 
 };
 
 export const deleteMentorOp = async (id: string): Promise<boolean> => {
-  if (!db || isMockMode) { saveMockMentorsDB(getMockMentorsDB().filter(m => m.id !== id)); return true; }
+  if (!db || isMockMode) { 
+    const mentors = loadLocal<Mentor[]>('eunoia_mentors_db', []);
+    saveLocal('eunoia_mentors_db', mentors.filter(m => m.id !== id)); 
+    return true; 
+  }
   try { await deleteDoc(doc(db, "mentors", id)); return true; }
   catch (error) { return false; }
 };
 
-const getMockMessagesDB = (): ContactMessage[] => loadLocal('eunoia_messages_db', []);
-const saveMockMessagesDB = (msgs: ContactMessage[]) => saveLocal('eunoia_messages_db', msgs);
-
 export const submitContactMessage = async (data: { name: string; email: string; message: string }) => {
-  const newMessage: ContactMessage = {
-    id: Date.now().toString(), ...data, date: new Date().toLocaleString(), read: false
-  };
+  const newMessage = { id: Date.now().toString(), ...data, date: new Date().toLocaleString(), read: false };
   if (!db || isMockMode) {
-    const msgs = getMockMessagesDB(); msgs.unshift(newMessage); saveMockMessagesDB(msgs);
+    const msgs = loadLocal<ContactMessage[]>('eunoia_messages_db', []); 
+    msgs.unshift(newMessage); saveLocal('eunoia_messages_db', msgs);
     return true;
   }
   try { await addDoc(collection(db, "messages"), newMessage); return true; }
@@ -167,7 +211,7 @@ export const submitContactMessage = async (data: { name: string; email: string; 
 };
 
 export const fetchMessages = async (): Promise<ContactMessage[]> => {
-  if (!db || isMockMode) return getMockMessagesDB();
+  if (!db || isMockMode) return loadLocal('eunoia_messages_db', []);
   try {
     const q = query(collection(db, "messages"), orderBy("date", "desc"));
     const querySnapshot = await getDocs(q);
@@ -176,7 +220,11 @@ export const fetchMessages = async (): Promise<ContactMessage[]> => {
 };
 
 export const deleteMessageOp = async (id: string): Promise<boolean> => {
-  if (!db || isMockMode) { saveMockMessagesDB(getMockMessagesDB().filter(m => m.id !== id)); return true; }
+  if (!db || isMockMode) {
+    const msgs = loadLocal<ContactMessage[]>('eunoia_messages_db', []);
+    saveLocal('eunoia_messages_db', msgs.filter(m => m.id !== id));
+    return true;
+  }
   try { await deleteDoc(doc(db, "messages", id)); return true; }
   catch (error) { return false; }
 };
