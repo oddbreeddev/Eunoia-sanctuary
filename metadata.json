@@ -1,5 +1,10 @@
 {
   "name": "Eunoia - Sanctuary of Self",
+  "short_name": "Eunoia",
   "description": "A mystical sanctuary for self-discovery, depth psychology insights, and personalized life strategy powered by Gemini 3.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#7c3aed",
   "requestFramePermissions": []
 }
