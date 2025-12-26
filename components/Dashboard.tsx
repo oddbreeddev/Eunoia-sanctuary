@@ -202,18 +202,36 @@ const DashboardPage: React.FC = () => {
       setLoading(false);
   };
 
+  const handleProceedToNext = () => {
+      if (currentStep !== 'complete') {
+          setActiveModule(currentStep);
+      } else {
+          setActiveModule(null);
+      }
+  };
+
   const renderActiveModule = () => {
       if (loading) return <DynamicLoader text={loadingMessage} />;
       
+      const nextStageName = nextModule?.title || "Dashboard";
+
       switch(activeModule) {
           case 'personality':
-              return !userData.archetype ? <QuizView title="Personality Archetype" questions={PERSONALITY_QUESTIONS} onComplete={(a:any) => { setLoading(true); analyzePersonality(a.join('; '), '').then(r => r.success && (setUserData({...userData, archetype: r.data}), saveProgress({archetype: r.data}))).finally(() => setLoading(false)); }} color="purple" icon={<Fingerprint className="text-purple-500"/>} /> : <ComprehensiveResultView title="Personality Result" data={userData.archetype} color="purple" onNext={handleBackToHub} onReset={() => saveProgress({archetype: null}).then(() => setUserData({...userData, archetype: null}))} />;
+              return !userData.archetype ? 
+                <QuizView title="Personality Archetype" questions={PERSONALITY_QUESTIONS} onComplete={(a:any) => { setLoading(true); analyzePersonality(a.join('; '), '').then(r => r.success && (setUserData({...userData, archetype: r.data}), saveProgress({archetype: r.data}))).finally(() => setLoading(false)); }} color="purple" icon={<Fingerprint className="text-purple-500"/>} /> : 
+                <ComprehensiveResultView title="Personality Result" data={userData.archetype} color="purple" nextStageLabel={nextStageName} onNext={handleProceedToNext} onReset={() => saveProgress({archetype: null}).then(() => setUserData({...userData, archetype: null}))} />;
           case 'temperament':
-              return !userData.temperament ? <QuizView title="Energy Style" questions={TEMPERAMENT_QUESTIONS} onComplete={(a:any) => { setLoading(true); analyzeTemperament(a.join('; '), '').then(r => r.success && (setUserData({...userData, temperament: r.data}), saveProgress({temperament: r.data}))).finally(() => setLoading(false)); }} color="cyan" icon={<Activity className="text-cyan-500"/>} /> : <ComprehensiveResultView title="Energy Analysis" data={userData.temperament} color="cyan" onNext={handleBackToHub} onReset={() => saveProgress({temperament: null}).then(() => setUserData({...userData, temperament: null}))} />;
+              return !userData.temperament ? 
+                <QuizView title="Energy Style" questions={TEMPERAMENT_QUESTIONS} onComplete={(a:any) => { setLoading(true); analyzeTemperament(a.join('; '), '').then(r => r.success && (setUserData({...userData, temperament: r.data}), saveProgress({temperament: r.data}))).finally(() => setLoading(false)); }} color="cyan" icon={<Activity className="text-cyan-500"/>} /> : 
+                <ComprehensiveResultView title="Energy Analysis" data={userData.temperament} color="cyan" nextStageLabel={nextStageName} onNext={handleProceedToNext} onReset={() => saveProgress({temperament: null}).then(() => setUserData({...userData, temperament: null}))} />;
           case 'ikigai':
-              return !userData.ikigai ? <IkigaiForm onSubmit={(l:any,g:any,n:any,p:any) => { setLoading(true); generateIkigaiInsight(l,g,n,p).then(r => r.success && (setUserData({...userData, ikigai: r.data}), saveProgress({ikigai: r.data}))).finally(() => setLoading(false)); }} /> : <ComprehensiveResultView title="Purpose Map" data={userData.ikigai} color="pink" onNext={handleBackToHub} onReset={() => saveProgress({ikigai: null}).then(() => setUserData({...userData, ikigai: null}))} />;
+              return !userData.ikigai ? 
+                <IkigaiForm onSubmit={(l:any,g:any,n:any,p:any) => { setLoading(true); generateIkigaiInsight(l,g,n,p).then(r => r.success && (setUserData({...userData, ikigai: r.data}), saveProgress({ikigai: r.data}))).finally(() => setLoading(false)); }} /> : 
+                <ComprehensiveResultView title="Purpose Map" data={userData.ikigai} color="pink" nextStageLabel={nextStageName} onNext={handleProceedToNext} onReset={() => saveProgress({ikigai: null}).then(() => setUserData({...userData, ikigai: null}))} />;
           case 'synthesis':
-              return !userData.synthesis ? <SynthesisForm onSubmit={(f:any) => { setLoading(true); generateLifeSynthesis({...userData, ...f}).then(r => r.success && (setUserData({...userData, ...f, synthesis: r.data}), saveProgress({...f, synthesis: r.data}))).finally(() => setLoading(false)); }} data={userData} /> : <ComprehensiveResultView title="Master Life Strategy" data={userData.synthesis} color="indigo" onNext={handleBackToHub} onReset={() => saveProgress({synthesis: null}).then(() => setUserData({...userData, synthesis: null}))} />;
+              return !userData.synthesis ? 
+                <SynthesisForm onSubmit={(f:any) => { setLoading(true); generateLifeSynthesis({...userData, ...f}).then(r => r.success && (setUserData({...userData, ...f, synthesis: r.data}), saveProgress({...f, synthesis: r.data}))).finally(() => setLoading(false)); }} data={userData} /> : 
+                <ComprehensiveResultView title="Master Life Strategy" data={userData.synthesis} color="indigo" nextStageLabel="Finalize Journey" onNext={handleProceedToNext} onReset={() => saveProgress({synthesis: null}).then(() => setUserData({...userData, synthesis: null}))} />;
           case 'mirror': return <MirrorChamberView profile={userData} onBack={handleBackToHub} />;
           case 'shadow': return !userData.shadowWork ? <ShadowReadinessView onGenerate={() => { setLoading(true); generateShadowWork(userData).then(res => res.success && setUserData({...userData, shadowWork: res.data})).finally(() => setLoading(false)); }} /> : <ComprehensiveResultView title="Shadow Discovery" data={userData.shadowWork} color="slate" onNext={handleBackToHub} onReset={() => saveProgress({shadowWork: null}).then(() => setUserData({...userData, shadowWork: null}))} />;
           case 'identity': return <IdentityView data={userData} onGenerate={() => { setLoading(true); generateNickname(userData.archetype?.archetype || 'Seeker').then(n => setUserData({...userData, nickname: n})).finally(() => setLoading(false)); }} onBack={handleBackToHub} />;
@@ -495,7 +513,7 @@ const DashboardPage: React.FC = () => {
         {/* Share Fallback Modal */}
         {showShareModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-[2rem] p-8 border border-gray-200 dark:border-white/10 shadow-2xl relative">
+            <div className="bg-white dark:bg-gray-900 w-full max-sm rounded-[2rem] p-8 border border-gray-200 dark:border-white/10 shadow-2xl relative">
               <button onClick={() => setShowShareModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
               <h3 className="text-xl font-bold dark:text-white mb-4 text-center">Share the Light</h3>
               <p className="text-sm text-gray-500 text-center mb-8">Inspire your network with today's affirmation.</p>
@@ -619,7 +637,7 @@ const QuizView = ({ questions, onComplete, color, icon }: any) => {
     );
 };
 
-const ComprehensiveResultView = ({ title, data, color, onNext, onReset }: any) => (
+const ComprehensiveResultView = ({ title, data, color, onNext, onReset, nextStageLabel }: any) => (
     <div className="space-y-12 animate-fade-in max-w-4xl mx-auto text-center pb-20">
         <div className="space-y-4">
             <span className={`px-4 py-1 bg-${color}-500/10 text-${color}-600 dark:text-${color}-400 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-${color}-500/20`}>{title}</span>
@@ -724,7 +742,9 @@ const ComprehensiveResultView = ({ title, data, color, onNext, onReset }: any) =
         </div>
 
         <div className="flex flex-col sm:flex-row gap-6 pt-10">
-            <button onClick={onNext} className="flex-1 py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[1.5rem] font-bold text-lg hover:scale-105 transition-all shadow-xl">Back to Sanctuary Center</button>
+            <button onClick={onNext} className="flex-1 py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[1.5rem] font-bold text-lg hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-2">
+                Proceed to {nextStageLabel || "Next Stage"} <ArrowIcon className="w-5 h-5" />
+            </button>
             <button onClick={onReset} className="px-10 py-6 border border-gray-200 dark:border-white/10 rounded-[1.5rem] font-bold text-gray-500 hover:text-red-500 hover:border-red-500/30 transition-all text-base">Restart Journey</button>
         </div>
     </div>
