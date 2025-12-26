@@ -1,11 +1,11 @@
 {
-  "name": "Eunoia - Sanctuary of Self",
+  "name": "Eunoia - Personal Growth Center",
   "short_name": "Eunoia",
-  "description": "A mystical sanctuary for self-discovery and personalized life strategy powered by Gemini 3.",
+  "description": "A simple center for self-discovery and life planning powered by helpful AI.",
   "start_url": "/index.html",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#000000",
+  "background_color": "#ffffff",
   "theme_color": "#7c3aed",
   "icons": [
     {

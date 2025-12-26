@@ -7,6 +7,13 @@ import {
 import { db, isMockMode } from "./firebaseConfig";
 
 // --- TYPES ---
+export interface DailyGoal {
+  id: string;
+  text: string;
+  completed: boolean;
+  createdAt: string;
+}
+
 export interface DailyLog {
   date: string;
   blueprintTheme: string;
@@ -40,6 +47,7 @@ export interface UserProfile {
   streakCount: number;
   lastReflectionDate?: string; // ISO string
   dailyLogs: DailyLog[];
+  dailyGoals: DailyGoal[];
   // Reminders
   notificationsEnabled: boolean;
 }
@@ -59,6 +67,16 @@ export interface ContactMessage {
   message: string;
   date: string;
   read: boolean;
+}
+
+export interface CommunityContribution {
+  id: string;
+  name: string;
+  email: string;
+  type: 'suggestion' | 'question' | 'testimonial';
+  content: string;
+  date: string;
+  approved: boolean;
 }
 
 export interface AdminStats {
@@ -124,6 +142,7 @@ export const saveUserProgress = async (userId: string, data: Partial<UserProfile
        status: 'Active',
        streakCount: 0,
        dailyLogs: [],
+       dailyGoals: [],
        notificationsEnabled: false,
        ...data 
      } as UserProfile);
@@ -207,6 +226,22 @@ export const submitContactMessage = async (data: { name: string; email: string; 
     return true;
   }
   try { await addDoc(collection(db, "messages"), newMessage); return true; }
+  catch (error) { return false; }
+};
+
+export const submitContribution = async (data: Omit<CommunityContribution, 'id' | 'date' | 'approved'>) => {
+  const newContribution = { 
+    id: Date.now().toString(), 
+    ...data, 
+    date: new Date().toLocaleString(), 
+    approved: false 
+  };
+  if (!db || isMockMode) {
+    const contributions = loadLocal<CommunityContribution[]>('eunoia_contributions_db', []); 
+    contributions.unshift(newContribution); saveLocal('eunoia_contributions_db', contributions);
+    return true;
+  }
+  try { await addDoc(collection(db, "contributions"), newContribution); return true; }
   catch (error) { return false; }
 };
 

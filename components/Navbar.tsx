@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Sparkles, Sun, Moon, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,7 +11,6 @@ const Navbar: React.FC<ThemeProps> = ({ isDark, toggleTheme }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check login status on mount and when location changes
   useEffect(() => {
     const checkLogin = () => {
         const localUser = localStorage.getItem('eunoia_user');
@@ -18,14 +18,12 @@ const Navbar: React.FC<ThemeProps> = ({ isDark, toggleTheme }) => {
         setIsLoggedIn(!!localUser || !!firebaseUser);
     };
     checkLogin();
-    // In a real app we would subscribe to auth changes, but polling/checking on route change works for this structure
     const interval = setInterval(checkLogin, 1000);
     return () => clearInterval(interval);
   }, [location]);
 
-  // Helper to handle hash navigation from different routes
   const handleNavClick = (hash: string) => {
-    setIsOpen(false); // Close mobile menu if open
+    setIsOpen(false);
     if (location.pathname !== '/') {
       navigate('/');
       setTimeout(() => {
@@ -60,9 +58,9 @@ const Navbar: React.FC<ThemeProps> = ({ isDark, toggleTheme }) => {
           
           <div className="hidden md:flex items-center gap-6">
             <div className="flex items-baseline space-x-8">
-              <button onClick={() => handleNavClick('#about')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors bg-transparent border-none cursor-pointer">Origins</button>
-              <button onClick={() => handleNavClick('#features')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors bg-transparent border-none cursor-pointer">Sanctuary</button>
-              <button onClick={() => handleNavClick('#ikigai')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors bg-transparent border-none cursor-pointer">AI Mentor</button>
+              <button onClick={() => handleNavClick('#about')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors bg-transparent border-none cursor-pointer">About Us</button>
+              <button onClick={() => handleNavClick('#features')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors bg-transparent border-none cursor-pointer">The Center</button>
+              <button onClick={() => handleNavClick('#ikigai')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors bg-transparent border-none cursor-pointer">AI Guide</button>
               <button onClick={() => handleNavClick('#contact')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors bg-transparent border-none cursor-pointer">Contact</button>
             </div>
             
@@ -78,7 +76,7 @@ const Navbar: React.FC<ThemeProps> = ({ isDark, toggleTheme }) => {
               onClick={handleActionClick}
               className="bg-gray-900 dark:bg-white/10 hover:bg-gray-800 dark:hover:bg-white/20 text-white px-6 py-2 rounded-full text-sm font-medium border border-transparent dark:border-white/20 transition-all hover:scale-105"
             >
-              {isLoggedIn ? 'Dashboard' : 'Join Community'}
+              {isLoggedIn ? 'Dashboard' : 'Sign Up'}
             </button>
 
             {isLoggedIn && (
@@ -113,12 +111,12 @@ const Navbar: React.FC<ThemeProps> = ({ isDark, toggleTheme }) => {
       {isOpen && (
         <div className="md:hidden bg-white dark:bg-black/90 backdrop-blur-xl border-t border-gray-200 dark:border-white/10">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <button onClick={() => handleNavClick('#about')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">Origins</button>
-            <button onClick={() => handleNavClick('#features')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">Sanctuary</button>
-            <button onClick={() => handleNavClick('#ikigai')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">AI Mentor</button>
+            <button onClick={() => handleNavClick('#about')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">About Us</button>
+            <button onClick={() => handleNavClick('#features')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">The Center</button>
+            <button onClick={() => handleNavClick('#ikigai')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">AI Guide</button>
             <button onClick={() => handleNavClick('#contact')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">Contact</button>
             <button onClick={handleActionClick} className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
-                {isLoggedIn ? 'Dashboard' : 'Join Community'}
+                {isLoggedIn ? 'Dashboard' : 'Sign Up'}
             </button>
              {isLoggedIn && (
                 <button onClick={() => navigate('/profile')} className="text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">

@@ -1,3 +1,4 @@
+
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -22,6 +23,8 @@ export interface AuthResponse {
 
 const getErrorMessage = (error: AuthError): string => {
   switch (error.code) {
+    case 'auth/network-request-failed':
+      return 'Network connection lost. Please check your internet or disable restrictive firewalls.';
     case 'auth/email-already-in-use':
       return 'That email is already registered. Try logging in.';
     case 'auth/invalid-email':
@@ -116,15 +119,12 @@ export const loginUser = async (data: UserData): Promise<AuthResponse> => {
     const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
     
     // --- DATABASE INTEGRITY CHECK (SELF-HEALING) ---
-    // This ensures that if a user exists in Auth but not in Firestore (e.g., previous write failed),
-    // we recreate the database entry so they don't get a blank screen.
     if (db && userCredential.user) {
         try {
             const userRef = doc(db, "users", userCredential.user.uid);
             const userSnap = await getDoc(userRef);
             
             if (!userSnap.exists()) {
-                console.log("Restoring missing user profile...");
                 await setDoc(userRef, {
                     id: userCredential.user.uid,
                     name: userCredential.user.displayName || 'Traveler',
@@ -135,7 +135,6 @@ export const loginUser = async (data: UserData): Promise<AuthResponse> => {
             }
         } catch (dbError) {
             console.error("Database consistency check failed:", dbError);
-            // We don't block login here, but data might be missing
         }
     }
 
@@ -145,12 +144,6 @@ export const loginUser = async (data: UserData): Promise<AuthResponse> => {
       user: userCredential.user as any
     };
   } catch (error: any) {
-    if (['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential'].includes(error.code)) {
-       console.warn("Login Validation:", error.code);
-    } else {
-       console.error("Login Error:", error);
-    }
-
     return {
       success: false,
       message: getErrorMessage(error)
@@ -220,8 +213,6 @@ export const registerUser = async (data: UserData): Promise<AuthResponse> => {
       });
     }
 
-    // --- CREATE PERMANENT FIRESTORE PROFILE ---
-    // This is the critical step for persistence.
     if (db) {
         try {
             await setDoc(doc(db, "users", userCredential.user.uid), {
@@ -233,7 +224,6 @@ export const registerUser = async (data: UserData): Promise<AuthResponse> => {
             });
         } catch (e) {
             console.error("CRITICAL: Error creating database profile:", e);
-            // Even if this fails, the 'loginUser' function's self-healing will catch it next time.
         }
     }
 
@@ -243,12 +233,6 @@ export const registerUser = async (data: UserData): Promise<AuthResponse> => {
       user: userCredential.user as any
     };
   } catch (error: any) {
-    if (['auth/email-already-in-use', 'auth/weak-password', 'auth/invalid-email'].includes(error.code)) {
-        console.warn("Registration Validation:", error.code);
-    } else {
-        console.error("Registration Error:", error);
-    }
-
     return {
       success: false,
       message: getErrorMessage(error)

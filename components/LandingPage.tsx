@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Hero from './Hero';
 import Features from './Features';
@@ -7,6 +8,7 @@ import FAQ from './FAQ';
 import QuoteSection from './QuoteSection';
 import Contact from './Contact';
 import IkigaiTeaser from './IkigaiTeaser';
+import CommunityContribution from './CommunityContribution';
 
 const LandingPage: React.FC = () => {
   return (
@@ -16,6 +18,7 @@ const LandingPage: React.FC = () => {
       <Features />
       <Testimonials />
       <IkigaiTeaser />
+      <CommunityContribution />
       <FAQ />
       <QuoteSection />
       <Contact />

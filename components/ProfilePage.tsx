@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { User, Mail, Calendar, Edit2, Save, LogOut, Loader2, Sparkles, Brain, Activity, Compass, Fingerprint, MapPin } from 'lucide-react';
+import { User, Mail, Calendar, Edit2, Save, LogOut, Loader2, Sparkles, Brain, Activity, Compass, Fingerprint, MapPin, CheckCircle2, Lock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../services/firebaseConfig';
 import { getUserProfile, updateUserProfile, UserProfile } from '../services/adminService';
@@ -27,6 +27,7 @@ const ProfilePage: React.FC = () => {
                     location: data.location || ''
                 });
             } else {
+                // Fix: Added missing dailyGoals property to satisfy UserProfile interface
                 const fallback: UserProfile = {
                     id: uid,
                     name: displayName || 'Traveler',
@@ -35,6 +36,7 @@ const ProfilePage: React.FC = () => {
                     status: 'Active',
                     streakCount: 0,
                     dailyLogs: [],
+                    dailyGoals: [],
                     notificationsEnabled: false
                 };
                 setProfile(fallback);
@@ -105,6 +107,13 @@ const ProfilePage: React.FC = () => {
   );
 
   if (!profile) return null;
+
+  const blueprintSteps = [
+    { id: 'archetype', label: 'Personality Archetype', done: !!profile.archetype },
+    { id: 'temperament', label: 'Energy Style (Temperament)', done: !!profile.temperament },
+    { id: 'ikigai', label: 'Purpose Map (Ikigai)', done: !!profile.ikigai },
+    { id: 'synthesis', label: 'Life Strategy (Master Plan)', done: !!profile.synthesis }
+  ];
 
   return (
     <div className="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-black transition-colors">
@@ -224,11 +233,11 @@ const ProfilePage: React.FC = () => {
                     <Sparkles className="w-4 h-4 text-purple-400"/> Current Status
                 </h3>
                 <div className="text-3xl font-serif italic mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-cyan-200">
-                    {profile.archetype?.archetype || "Initiate"}
+                    {profile.archetype?.archetype || "Initiate Seeker"}
                 </div>
                 <div className="space-y-2">
                     <div className="flex justify-between text-xs text-gray-400 font-medium uppercase">
-                        <span>Sanctuary Completion</span>
+                        <span>Path Completion</span>
                         <span>{profile.synthesis ? '100%' : profile.ikigai ? '75%' : profile.temperament ? '50%' : profile.archetype ? '25%' : '0%'}</span>
                     </div>
                     <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
@@ -248,7 +257,7 @@ const ProfilePage: React.FC = () => {
                         <Brain className="w-5 h-5" /> <span className="text-xs font-bold uppercase tracking-wider">Archetype</span>
                     </div>
                     <div className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
-                        {profile.archetype?.archetype || "Not Analyzed"}
+                        {profile.archetype?.archetype || "Locked"}
                     </div>
                 </div>
                 <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-5 rounded-2xl shadow-sm hover:border-cyan-500/30 transition-colors">
@@ -256,7 +265,7 @@ const ProfilePage: React.FC = () => {
                         <Activity className="w-5 h-5" /> <span className="text-xs font-bold uppercase tracking-wider">Temperament</span>
                     </div>
                     <div className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
-                        {profile.temperament?.temperament || "Not Analyzed"}
+                        {profile.temperament?.temperament || "Locked"}
                     </div>
                 </div>
                 <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-5 rounded-2xl shadow-sm hover:border-pink-500/30 transition-colors">
@@ -264,7 +273,7 @@ const ProfilePage: React.FC = () => {
                         <Compass className="w-5 h-5" /> <span className="text-xs font-bold uppercase tracking-wider">Ikigai</span>
                     </div>
                     <div className="text-lg font-bold text-gray-900 dark:text-white leading-tight truncate">
-                        {profile.ikigai?.title || "Not Analyzed"}
+                        {profile.ikigai?.title || "Locked"}
                     </div>
                 </div>
             </div>
@@ -274,13 +283,13 @@ const ProfilePage: React.FC = () => {
                      <div className="flex flex-col md:flex-row gap-8 items-center">
                         <div className="flex-1">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase mb-4">
-                                <Fingerprint className="w-3 h-3" /> Synthesis Complete
+                                <Fingerprint className="w-3 h-3" /> Sanctuary Master
                             </div>
                             <h3 className="text-3xl font-serif font-bold text-gray-900 dark:text-white mb-4">
                                 The {profile.synthesis.mantra ? "Path of Wisdom" : "Sanctuary Path"}
                             </h3>
                             <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-                                Your data has been synthesized into a comprehensive life strategy. This badge represents the unique intersection of your personality, biological rhythm, and purpose.
+                                You have unlocked the full potential of the Sanctuary. Your Sanctuary Badge is now active, representing your unique psychological blueprint.
                             </p>
                             <div className="bg-gray-50 dark:bg-black/30 rounded-2xl p-5 border-l-4 border-emerald-500 mb-8">
                                 <h4 className="text-xs font-bold text-gray-500 uppercase mb-2 tracking-widest">Your Life Mantra</h4>
@@ -290,7 +299,7 @@ const ProfilePage: React.FC = () => {
                                 onClick={() => navigate('/dashboard')} 
                                 className="w-full md:w-auto px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-black rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                             >
-                                View Full Strategy <span className="text-xl">&rarr;</span>
+                                View Live Roadmap <span className="text-xl">&rarr;</span>
                             </button>
                         </div>
                         <div className="w-full max-w-[280px] perspective-1000 group">
@@ -323,13 +332,39 @@ const ProfilePage: React.FC = () => {
                      </div>
                 </div>
             ) : (
-                <div className="bg-gray-50 dark:bg-white/5 border border-dashed border-gray-300 dark:border-gray-700 rounded-3xl p-12 text-center flex flex-col items-center">
-                    <div className="w-16 h-16 bg-gray-200 dark:bg-white/10 rounded-full flex items-center justify-center mb-6 text-gray-400">
-                        <Compass className="w-8 h-8" />
+                <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-3xl p-8 md:p-12 shadow-xl">
+                    <div className="max-w-xl mx-auto text-center space-y-8">
+                        <div className="w-20 h-20 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-full flex items-center justify-center mx-auto border border-amber-100 dark:border-amber-800 shadow-inner">
+                            <Lock className="w-10 h-10" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Your Sanctuary Badge is Locked</h3>
+                            <p className="text-gray-500 text-sm">To earn your badge and generate your full Life Strategy, you must complete the following discovery steps in order.</p>
+                        </div>
+                        
+                        {/* Progress Checklist */}
+                        <div className="grid gap-3 text-left">
+                            {blueprintSteps.map((step, i) => (
+                                <div key={step.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${step.done ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800' : 'bg-gray-50 dark:bg-black/20 border-gray-100 dark:border-white/5 opacity-70'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${step.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-transparent border-gray-300 dark:border-gray-700 text-gray-400'}`}>
+                                            {step.done ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-[10px] font-bold">{i+1}</span>}
+                                        </div>
+                                        <span className={`text-sm font-medium ${step.done ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-500'}`}>{step.label}</span>
+                                    </div>
+                                    {!step.done && <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Locked</span>}
+                                    {step.done && <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-500">Completed</span>}
+                                </div>
+                            ))}
+                        </div>
+
+                        <button 
+                            onClick={() => navigate('/dashboard')} 
+                            className="w-full py-4 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors shadow-lg hover:shadow-purple-500/30 flex items-center justify-center gap-2 group"
+                        >
+                            Complete Your Discovery <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Sanctuary Badge Locked</h3>
-                    <p className="text-gray-500 mb-8 max-w-md">Complete Archetype, Temperament, and Ikigai to generate your unique Sanctuary Badge and Strategy.</p>
-                    <button onClick={() => navigate('/dashboard')} className="px-8 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors shadow-lg hover:shadow-purple-500/30">Go to Dashboard</button>
                 </div>
             )}
         </div>
