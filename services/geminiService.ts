@@ -59,134 +59,134 @@ const generateData = async (systemPrompt: string, userPrompt: string, model: str
 };
 
 export const analyzeDailyGrowth = async (profile: any, blueprint: any, userReport: string, energy: number) => {
-    const systemPrompt = `You are a simple, friendly Growth Coach. Analyze the user's progress. Use plain English.
+    const systemPrompt = `You are a concise Growth Coach. Analyze progress. 
     Return JSON: {
-      "growthSummary": "2 short sentences of practical insight.",
+      "growthSummary": "1 short sentence of practical insight.",
       "achievementScore": 0-100,
-      "lessonLearned": "One helpful tip.",
-      "celebration": "A positive note."
+      "lessonLearned": "One short tip.",
+      "celebration": "A 5-word positive note."
     }`;
     return generateData(systemPrompt, `User Report: "${userReport}", Energy: ${energy}/5`);
 };
 
 export const consultTheMirror = async (userMessage: string, profile: any) => {
-    const systemPrompt = `You are a helpful AI Guide. Reflect the user's words back to help them think better. Use simple language. No mystical terms.
+    const systemPrompt = `You are a concise AI Guide. Reflect the user's words.
     Return JSON: { 
-      "reflection": "A short summary of what they said.", 
-      "question": "A simple question to help them move forward." 
+      "reflection": "One sentence summary.", 
+      "question": "One simple, short question." 
     }`;
     return generateData(systemPrompt, userMessage);
 };
 
 export const generateDailyBlueprint = async (profile: any) => {
-    const systemPrompt = `You are a Personal Assistant. Plan 3 simple tasks for the day based on their psychological profile.
+    const systemPrompt = `You are a Personal Assistant. Plan 3 simple tasks. Keep descriptions under 10 words.
     Return JSON: { 
-      "theme": "A clear title",
-      "objective": "A simple goal",
-      "morning": { "task": "Task", "why": "Why it helps" },
-      "afternoon": { "task": "Task", "why": "Why it helps" },
-      "evening": { "task": "Task", "why": "Why it helps" },
-      "affirmation": "A short positive phrase."
+      "theme": "Short title",
+      "objective": "Short goal",
+      "morning": { "task": "Task", "why": "Short benefit" },
+      "afternoon": { "task": "Task", "why": "Short benefit" },
+      "evening": { "task": "Task", "why": "Short benefit" },
+      "affirmation": "Short positive phrase."
     }`;
     return generateData(systemPrompt, `Profile context: ${JSON.stringify(profile)}`);
 };
 
 export const generateDailyAffirmation = async (profile: any) => {
-    const systemPrompt = `You are a supportive Growth Coach. Generate 1 short, powerful daily affirmation for the user. 
-    Use plain, encouraging English. Ground it in their strengths if possible.
-    Return JSON: { "affirmation": "The affirmation text.", "context": "A 5-word explanation of why this fits today." }`;
+    const systemPrompt = `Generate 1 short, powerful daily affirmation. Max 10 words.
+    Return JSON: { "affirmation": "Text", "context": "3-word explanation." }`;
     return generateData(systemPrompt, `Profile context: ${JSON.stringify(profile)}`);
 };
 
 export const generateIkigaiInsight = async (love: string, goodAt: string, worldNeeds: string, paidFor: string) => {
-    const systemPrompt = `You are a Purpose Coach. Analyze the user's inputs. 
-    BE CONCISE. Avoid fluff.
+    const systemPrompt = `You are a Purpose Coach. BE EXTREMELY CONCISE.
     REQUIRED SCHEMA:
     {
-      "title": "Path Title",
-      "summary": "ONE punchy sentence summarizing their path.",
-      "description": "A focused 150-word analysis.",
-      "strengths": ["4 bullet points"],
-      "weaknesses": ["3 points"],
-      "careerAlignment": ["4 roles"],
+      "title": "Path Name",
+      "summary": "ONE punchy sentence.",
+      "description": "Max 60 words analysis.",
+      "strengths": ["3 short bullets"],
+      "weaknesses": ["2 short points"],
+      "careerAlignment": ["3 roles"],
       "immediateAction": "One clear first step.",
-      "wayForward": ["3-part roadmap"]
+      "wayForward": ["3-step roadmap"]
     }`;
     return generateData(systemPrompt, `Love: ${love}, Good At: ${goodAt}, Needs: ${worldNeeds}, Paid: ${paidFor}`);
 };
 
 export const analyzePersonality = async (quizAnswers: string, selfDescription: string) => {
-    const systemPrompt = `You are a Behavioral Psychologist. Analyze these quiz results. 
-    Focus on quality over quantity. Keep it punchy.
+    const systemPrompt = `You are a Behavioral Psychologist. Analyze personality quiz results. 
+    KEEP IT CONCISE AND PUNCHY.
     REQUIRED SCHEMA:
     {
       "title": "Archetype Name",
-      "tagline": "A defining catchphrase",
-      "summary": "ONE powerful sentence defining their core driver.",
-      "description": "A high-impact 150-word deep dive.",
-      "strengths": ["5 unique superpowers"],
-      "weaknesses": ["4 blind spots"],
-      "socialDynamics": "Short summary of interactions.",
-      "stressManagement": "One specific technique.",
-      "careerAlignment": "Ideal environment description.",
-      "wayForward": "Actionable advice for this week."
+      "tagline": "A short catchphrase",
+      "summary": "ONE powerful sentence.",
+      "description": "Max 60 words deep dive.",
+      "strengths": ["4 short superpowers"],
+      "weaknesses": ["3 short blind spots"],
+      "socialDynamics": "One sentence interaction style.",
+      "stressManagement": "One specific short technique.",
+      "careerAlignment": "One sentence description.",
+      "wayForward": "Actionable advice in one sentence."
     }`;
     return generateData(systemPrompt, quizAnswers);
 };
 
 export const analyzeTemperament = async (quizAnswers: string, energyDescription: string) => {
-    const systemPrompt = `You are an Energy Coach. Define the user's natural temperament.
+    const systemPrompt = `You are an Energy Coach. Define temperament. 
+    NO FLUFF.
     REQUIRED SCHEMA:
     {
       "title": "Temperament Name",
-      "tagline": "Natural frequency description",
-      "summary": "ONE sentence about their energy baseline.",
-      "description": "A focused 150-word deep dive.",
-      "strengths": ["4 advantages"],
-      "weaknesses": ["3 traps"],
-      "productivityHack": "One specific system.",
-      "idealEnvironment": "Optimal focus space.",
-      "socialInteraction": "Recharge method.",
-      "wayForward": "Routine suggestion."
+      "tagline": "Short description",
+      "summary": "ONE sentence energy baseline.",
+      "description": "Max 60 words focused deep dive.",
+      "strengths": ["3 advantages"],
+      "weaknesses": ["2 traps"],
+      "productivityHack": "One short system.",
+      "idealEnvironment": "One short description.",
+      "socialInteraction": "One sentence recharge.",
+      "wayForward": "Short routine suggestion."
     }`;
     return generateData(systemPrompt, quizAnswers);
 };
 
 export const generateLifeSynthesis = async (data: any) => {
-    const systemPrompt = `You are a Strategic Life Architect. Synthesize data into a Master Life Strategy.
-    KEEP IT ACTION-ORIENTED.
+    const systemPrompt = `You are a Strategic Architect. Synthesize into a Master Life Strategy.
+    PUNCHY AND ACTION-ORIENTED.
     REQUIRED SCHEMA:
     {
       "title": "The Strategic Legacy",
-      "mantra": "A powerful guiding principle",
-      "summary": "ONE sentence that captures their combined identity.",
-      "description": "A 200-word holistic summary.",
-      "strengths": ["6 major advantages"],
-      "weaknesses": ["5 pitfalls"],
-      "topPriority": "Single most important goal.",
-      "secondaryGoals": ["3 supporting objectives"],
-      "wayForward": ["5-stage roadmap"]
+      "mantra": "A short guiding principle",
+      "summary": "ONE sentence identity.",
+      "description": "Max 80 words holistic summary.",
+      "strengths": ["4 major advantages"],
+      "weaknesses": ["3 pitfalls"],
+      "topPriority": "Single short goal.",
+      "secondaryGoals": ["2 supporting objectives"],
+      "wayForward": ["4-stage short roadmap"]
     }`;
     return generateData(systemPrompt, JSON.stringify(data), "gemini-3-pro-preview");
 };
 
 export const generateShadowWork = async (profile: any) => {
-    const systemPrompt = `You are a Depth Psychology Guide. Help the user uncover their 'Shadow'.
+    const systemPrompt = `You are a Depth Psychology Guide. Uncover the 'Shadow'.
+    BRIEF AND HIGH IMPACT.
     REQUIRED SCHEMA:
     {
       "title": "Shadow Archetype",
-      "tagline": "The hidden mirror",
-      "summary": "ONE sentence about what they tend to repress.",
-      "description": "A 150-word focused analysis.",
-      "strengths": ["Hidden talents"],
-      "weaknesses": ["Repressive habits"],
-      "integrationExercise": "One specific exercise.",
-      "wayForward": "Path to self-acceptance."
+      "tagline": "Short description",
+      "summary": "ONE sentence about repression.",
+      "description": "Max 60 words analysis.",
+      "strengths": ["2 hidden talents"],
+      "weaknesses": ["2 repressive habits"],
+      "integrationExercise": "One specific short exercise.",
+      "wayForward": "Short path to acceptance."
     }`;
     return generateData(systemPrompt, JSON.stringify(profile));
 };
 
 export const generateNickname = async (context: string): Promise<string> => {
-    const res = await generateData(`Generate 1 simple, cool nickname. Return JSON: { "nickname": "The Name" }`, context);
-    return (res.success && res.data?.nickname) ? res.data.nickname : "Goal Getter";
+    const res = await generateData(`Generate 1 simple, short nickname. JSON: { "nickname": "Name" }`, context);
+    return (res.success && res.data?.nickname) ? res.data.nickname : "Seeker";
 };
