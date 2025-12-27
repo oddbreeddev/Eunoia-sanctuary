@@ -2,18 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Users, MessageSquare, Settings, LogOut, 
-  TrendingUp, Activity, AlertCircle, Trash2, ShieldCheck, Plus, Sparkles, UserPlus, Image as ImageIcon, Link, Loader2, Inbox, Mail, Menu, X
+  TrendingUp, Activity, AlertCircle, Trash2, ShieldCheck, Plus, Sparkles, UserPlus, Image as ImageIcon, Link, Loader2, Inbox, Mail, Menu, X, 
+  MessageSquareQuote, CheckCircle2, HelpCircle, Lightbulb
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   fetchAdminStats, fetchAllUsers, deleteUserOp, toggleUserStatusOp, 
   generateCommunityReport, UserProfile, fetchMentors, addMentorOp, deleteMentorOp, Mentor,
-  fetchMessages, deleteMessageOp, ContactMessage
+  fetchMessages, deleteMessageOp, ContactMessage, fetchContributions, deleteContributionOp, approveContributionOp, CommunityContribution
 } from '../services/adminService';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'mentors' | 'messages' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'mentors' | 'community' | 'messages' | 'settings'>('overview');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Data States
@@ -21,6 +22,7 @@ const AdminDashboard: React.FC = () => {
   const [userList, setUserList] = useState<UserProfile[]>([]);
   const [mentorList, setMentorList] = useState<Mentor[]>([]);
   const [messageList, setMessageList] = useState<ContactMessage[]>([]);
+  const [contributionList, setContributionList] = useState<CommunityContribution[]>([]);
   
   // UI States
   const [loading, setLoading] = useState(true);
@@ -46,16 +48,18 @@ const AdminDashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [s, u, m, msg] = await Promise.all([
+      const [s, u, m, msg, c] = await Promise.all([
         fetchAdminStats(),
         fetchAllUsers(),
         fetchMentors(),
-        fetchMessages()
+        fetchMessages(),
+        fetchContributions()
       ]);
       setStats(s);
       setUserList(u);
       setMentorList(m);
       setMessageList(msg);
+      setContributionList(c);
     } catch (e) {
       console.error("Failed to load admin data", e);
     } finally {
@@ -104,6 +108,18 @@ const AdminDashboard: React.FC = () => {
         await deleteMessageOp(id);
         loadData();
     }
+  };
+
+  const handleDeleteContribution = async (id: string) => {
+    if(window.confirm('Delete this contribution?')) {
+        await deleteContributionOp(id);
+        loadData();
+    }
+  };
+
+  const handleApproveContribution = async (id: string) => {
+    await approveContributionOp(id);
+    loadData();
   };
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
@@ -172,6 +188,12 @@ const AdminDashboard: React.FC = () => {
             <UserPlus className="w-5 h-5" /> Mentors
           </button>
           <button 
+            onClick={() => handleTabChange('community')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === 'community' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+          >
+            <MessageSquareQuote className="w-5 h-5" /> Community
+          </button>
+          <button 
             onClick={() => handleTabChange('messages')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === 'messages' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
           >
@@ -235,7 +257,7 @@ const AdminDashboard: React.FC = () => {
               
               {!aiReport ? (
                 <div className="text-center py-8">
-                  <p className="text-purple-200 mb-6 max-w-lg mx-auto text-sm md:text-base">Generate a real-time psychographic analysis of your user base using Gemini 2.5 Flash.</p>
+                  <p className="text-purple-200 mb-6 max-w-lg mx-auto text-sm md:text-base">Generate a real-time psychographic analysis of your user base using Gemini 3.</p>
                   <button 
                     onClick={handleGenerateReport}
                     disabled={loadingAi}
@@ -253,40 +275,70 @@ const AdminDashboard: React.FC = () => {
                 </div>
               )}
             </div>
-
-            {/* Visual Charts */}
-            {stats.totalUsers > 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                   <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800">
-                      <h3 className="font-bold mb-6">Archetype Distribution</h3>
-                      <div className="space-y-4">
-                        {Object.entries(stats.archetypeDistribution).map(([name, count]) => (
-                          <div key={name}>
-                             <div className="flex justify-between text-sm mb-1">
-                               <span>{name}</span>
-                               <span className="font-bold">{count as number}</span>
-                             </div>
-                             <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
-                               <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${(Number(count) / stats.totalUsers) * 100}%` }}></div>
-                             </div>
-                          </div>
-                        ))}
-                      </div>
-                   </div>
-                   <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800">
-                      <h3 className="font-bold mb-6">Temperament Matrix</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                         {Object.entries(stats.temperamentDistribution).map(([name, count]) => (
-                            <div key={name} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-center">
-                                <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{count as number}</div>
-                                <div className="text-xs uppercase tracking-wider text-gray-500 break-words">{name}</div>
-                            </div>
-                         ))}
-                      </div>
-                   </div>
-                </div>
-            )}
           </div>
+        )}
+
+        {/* COMMUNITY TAB */}
+        {activeTab === 'community' && (
+           <div className="space-y-6 animate-fade-in pb-20">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl md:text-3xl font-bold">Community Contributions</h2>
+                <button onClick={loadData} className="text-sm text-purple-500 hover:text-purple-400">Refresh List</button>
+              </div>
+
+              {contributionList.length === 0 ? (
+                  <div className="p-16 text-center bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
+                      <p className="text-gray-500">No community contributions yet.</p>
+                  </div>
+              ) : (
+                  <div className="grid gap-6">
+                      {contributionList.map((item) => (
+                          <div key={item.id} className={`bg-white dark:bg-gray-900 p-6 rounded-2xl border shadow-sm transition-all ${item.approved ? 'border-green-200 dark:border-green-900/30' : 'border-gray-200 dark:border-gray-800'}`}>
+                              <div className="flex justify-between items-start mb-4">
+                                  <div className="flex items-center gap-3">
+                                      <div className={`p-2 rounded-lg ${
+                                        item.type === 'testimonial' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' :
+                                        item.type === 'suggestion' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600' :
+                                        'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600'
+                                      }`}>
+                                          {item.type === 'testimonial' ? <MessageSquareQuote className="w-5 h-5" /> :
+                                           item.type === 'suggestion' ? <Lightbulb className="w-5 h-5" /> :
+                                           <HelpCircle className="w-5 h-5" />}
+                                      </div>
+                                      <div>
+                                          <div className="font-bold flex items-center gap-2">
+                                            {item.name}
+                                            {item.approved && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                                          </div>
+                                          <div className="text-xs text-gray-500 uppercase tracking-widest font-bold">{item.type} • {item.date}</div>
+                                      </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                      {item.type === 'testimonial' && !item.approved && (
+                                          <button 
+                                            onClick={() => handleApproveContribution(item.id)}
+                                            className="p-2 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                            title="Approve and Publish"
+                                          >
+                                              <CheckCircle2 className="w-4 h-4" />
+                                          </button>
+                                      )}
+                                      <button 
+                                        onClick={() => handleDeleteContribution(item.id)}
+                                        className="p-2 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                                        title="Delete"
+                                      >
+                                          <Trash2 className="w-4 h-4" />
+                                      </button>
+                                  </div>
+                              </div>
+                              <p className="text-gray-700 dark:text-gray-300 leading-relaxed italic">"{item.content}"</p>
+                              {item.email && <div className="mt-4 text-xs text-gray-400">Contact: {item.email}</div>}
+                          </div>
+                      ))}
+                  </div>
+              )}
+           </div>
         )}
 
         {/* USERS TAB */}
@@ -341,7 +393,7 @@ const AdminDashboard: React.FC = () => {
                                 </button>
                                 <button 
                                     onClick={() => handleDeleteUser(user.id)}
-                                    className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg text-red-500"
+                                    className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg text-red-500"
                                     title="Delete"
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -524,21 +576,6 @@ const AdminDashboard: React.FC = () => {
                  </div>
                  <p className="text-xs text-gray-500">Note: New admins must be verified via main console.</p>
               </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800">
-               <h3 className="font-bold mb-4">Global Switches</h3>
-               <div className="space-y-4">
-                 <div className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
-                    <div>
-                      <div className="font-medium">Maintenance Mode</div>
-                      <div className="text-xs text-gray-500">Disable access for all non-admin users</div>
-                    </div>
-                    <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-full relative">
-                       <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div>
-                    </div>
-                 </div>
-               </div>
             </div>
           </div>
         )}

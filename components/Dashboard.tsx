@@ -6,7 +6,7 @@ import {
   Heart, Briefcase, Zap, Layers, Target, Clock, BookOpen, Fingerprint, Loader2, Sparkles, ArrowRight as ArrowIcon, X,
   Quote, Sun, Play, Check, Moon, Share2, Map, Calendar, TrendingUp, Minus, Ghost, Eye, Send, RotateCcw, Sunrise, Sunset, Coffee, ListChecks,
   Globe, Handshake, HeartOff, Landmark, History, Bell, BellOff, Info, Sparkle, HelpCircle, Lightbulb as IdeaIcon, Copy, RefreshCw,
-  Twitter, Share, Plus, Trash
+  Twitter, Share, Plus, Trash, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../services/firebaseConfig';
@@ -332,7 +332,7 @@ const DashboardPage: React.FC = () => {
                                 <h2 className="text-2xl font-bold dark:text-white mb-2">{nextModule?.title}</h2>
                                 <p className="text-gray-500 text-sm">This is the key to unlocking your next level. Complete this to proceed.</p>
                             </div>
-                            <button className="bg-gray-900 dark:bg-white text-white dark:text-black px-8 py-3 rounded-xl font-bold hover:scale-105 transition-transform flex items-center gap-2">
+                            <button className="bg-gray-900 dark:bg-white text-white dark:text-black px-8 py-3 rounded-xl font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2">
                                 Unlock Now <ArrowIcon className="w-4 h-4" />
                             </button>
                         </div>
@@ -637,117 +637,126 @@ const QuizView = ({ questions, onComplete, color, icon }: any) => {
     );
 };
 
-const ComprehensiveResultView = ({ title, data, color, onNext, onReset, nextStageLabel }: any) => (
-    <div className="space-y-12 animate-fade-in max-w-4xl mx-auto text-center pb-20">
-        <div className="space-y-4">
-            <span className={`px-4 py-1 bg-${color}-500/10 text-${color}-600 dark:text-${color}-400 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-${color}-500/20`}>{title}</span>
-            <h3 className="text-4xl md:text-6xl font-bold dark:text-white">{data.title || data.archetype || data.temperament}</h3>
-            <p className="text-gray-500 italic text-xl">"{data.tagline || data.mantra || 'A unique path of discovery'}"</p>
-        </div>
+const ComprehensiveResultView = ({ title, data, color, onNext, onReset, nextStageLabel }: any) => {
+    const [showFullAnalysis, setShowFullAnalysis] = useState(false);
 
-        <div className="p-8 md:p-12 bg-gray-50 dark:bg-white/5 rounded-[3rem] text-lg md:text-xl leading-relaxed text-gray-700 dark:text-gray-300 italic border border-gray-200 dark:border-white/5 shadow-inner text-left">
-            {data.description || data.insight || data.strengthAnalysis}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-            <div className="p-8 bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/30 rounded-[2.5rem] shadow-sm">
-                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <Check className="w-5 h-5"/> Key Strengths
-                </h4>
-                <ul className="space-y-4">
-                    {data.strengths?.map((s:string) => (
-                        <li key={s} className="text-base text-gray-700 dark:text-gray-300 flex items-start gap-3 leading-snug">
-                            <span className="text-emerald-500 mt-1 font-bold">•</span> {s}
-                        </li>
-                    ))}
-                </ul>
+    return (
+        <div className="space-y-10 animate-fade-in max-w-4xl mx-auto text-center pb-20">
+            <div className="space-y-4">
+                <span className={`px-4 py-1 bg-${color}-500/10 text-${color}-600 dark:text-${color}-400 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-${color}-500/20`}>{title}</span>
+                <h3 className="text-4xl md:text-6xl font-bold dark:text-white">{data.title || data.archetype || data.temperament}</h3>
+                <p className="text-gray-500 italic text-xl">"{data.tagline || data.mantra || 'A unique path of discovery'}"</p>
             </div>
-            
-            <div className="p-8 bg-orange-50/50 dark:bg-orange-950/10 border border-orange-100 dark:border-orange-900/30 rounded-[2.5rem] shadow-sm">
-                <h4 className="text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5"/> Growth Areas
-                </h4>
-                <ul className="space-y-4">
-                    {(data.weaknesses || data.shadowTraits || data.shadowSide || data.stressTriggers)?.map((s:string) => (
-                        <li key={s} className="text-base text-gray-700 dark:text-gray-300 flex items-start gap-3 leading-snug">
-                            <span className="text-orange-500 mt-1 font-bold">•</span> {s}
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        </div>
 
-        {/* Dynamic Detailed Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-            {data.socialDynamics && (
-                <div className="p-6 bg-blue-50/50 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-900/30 rounded-3xl">
-                    <h4 className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-3">Social Dynamics</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{data.socialDynamics}</p>
+            {/* Concise Summary Block */}
+            {data.summary && (
+                <div className="p-8 bg-purple-600 text-white rounded-[2.5rem] shadow-xl text-xl font-medium leading-relaxed italic animate-pulse-slow">
+                    "{data.summary}"
                 </div>
             )}
-            {data.stressManagement && (
-                <div className="p-6 bg-purple-50/50 dark:bg-purple-950/10 border border-purple-100 dark:border-purple-900/30 rounded-3xl">
-                    <h4 className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-3">Stress Shield</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{data.stressManagement}</p>
-                </div>
-            )}
-            {data.careerAlignment && (
-                <div className="p-6 bg-cyan-50/50 dark:bg-cyan-950/10 border border-cyan-100 dark:border-cyan-900/30 rounded-3xl">
-                    <h4 className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest mb-3">Career Field</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{Array.isArray(data.careerAlignment) ? data.careerAlignment.join(', ') : data.careerAlignment}</p>
-                </div>
-            )}
-            {data.productivityHack && (
-                <div className="p-6 bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900/30 rounded-3xl">
-                    <h4 className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-3">Productivity Hack</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{data.productivityHack}</p>
-                </div>
-            )}
-            {data.idealEnvironment && (
-                <div className="p-6 bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/30 rounded-3xl">
-                    <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-3">Ideal Focus Space</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{data.idealEnvironment}</p>
-                </div>
-            )}
-             {data.topPriority && (
-                <div className="p-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30 rounded-3xl">
-                    <h4 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-3">Primary Goal</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{data.topPriority}</p>
-                </div>
-            )}
-        </div>
 
-        {/* The Way Forward Roadmap */}
-        <div className="p-10 md:p-14 bg-gradient-to-br from-slate-900 to-black text-white rounded-[3rem] text-left border border-white/10 shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity">
-                <TrendingUp className="w-48 h-48 rotate-[-15deg]" />
-            </div>
-            <h4 className="text-sm font-bold uppercase tracking-[0.3em] text-purple-400 mb-8 flex items-center gap-3">
-                <Map className="w-6 h-6" /> The Master Roadmap
-            </h4>
-            <div className="space-y-8 relative z-10">
-                {Array.isArray(data.wayForward) ? data.wayForward.map((step: any, i: number) => (
-                    <div key={i} className="flex gap-6 items-start group/step">
-                        <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/50 flex items-center justify-center text-sm font-bold text-purple-300 shrink-0 group-hover/step:bg-purple-500 group-hover/step:text-white transition-all">
-                            {i+1}
-                        </div>
-                        <p className="text-lg md:text-xl font-medium leading-relaxed pt-1">{step}</p>
-                    </div>
-                )) : (
-                    <div className="text-lg md:text-xl font-medium leading-relaxed">
-                        {data.wayForward}
+            {/* Toggleable Deep Analysis */}
+            <div className="space-y-4">
+                <button 
+                    onClick={() => setShowFullAnalysis(!showFullAnalysis)}
+                    className="flex items-center gap-2 mx-auto text-sm font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 hover:opacity-70 transition-opacity"
+                >
+                    {showFullAnalysis ? <><ChevronUp className="w-4 h-4"/> Hide Analysis</> : <><ChevronDown className="w-4 h-4"/> View Deep Analysis</>}
+                </button>
+                
+                {showFullAnalysis && (
+                    <div className="p-8 md:p-12 bg-gray-50 dark:bg-white/5 rounded-[3rem] text-lg leading-relaxed text-gray-700 dark:text-gray-300 italic border border-gray-200 dark:border-white/5 shadow-inner text-left animate-fade-in">
+                        {data.description || data.insight || data.strengthAnalysis}
                     </div>
                 )}
             </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row gap-6 pt-10">
-            <button onClick={onNext} className="flex-1 py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[1.5rem] font-bold text-lg hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-2">
-                Proceed to {nextStageLabel || "Next Stage"} <ArrowIcon className="w-5 h-5" />
-            </button>
-            <button onClick={onReset} className="px-10 py-6 border border-gray-200 dark:border-white/10 rounded-[1.5rem] font-bold text-gray-500 hover:text-red-500 hover:border-red-500/30 transition-all text-base">Restart Journey</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                <div className="p-8 bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/30 rounded-[2.5rem] shadow-sm">
+                    <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <Check className="w-5 h-5"/> Key Strengths
+                    </h4>
+                    <ul className="space-y-3">
+                        {data.strengths?.map((s:string) => (
+                            <li key={s} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-3 leading-snug">
+                                <span className="text-emerald-500 mt-1 font-bold">•</span> {s}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+                
+                <div className="p-8 bg-orange-50/50 dark:bg-orange-950/10 border border-orange-100 dark:border-orange-900/30 rounded-[2.5rem] shadow-sm">
+                    <h4 className="text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5"/> Growth Areas
+                    </h4>
+                    <ul className="space-y-3">
+                        {(data.weaknesses || data.shadowTraits || data.shadowSide || data.stressTriggers)?.map((s:string) => (
+                            <li key={s} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-3 leading-snug">
+                                <span className="text-orange-500 mt-1 font-bold">•</span> {s}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+
+            {/* Compact Detail Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-left">
+                {[
+                    { label: "Social", value: data.socialDynamics, icon: Globe },
+                    { label: "Stress", value: data.stressManagement, icon: Shield },
+                    { label: "Career", value: Array.isArray(data.careerAlignment) ? data.careerAlignment.join(', ') : data.careerAlignment, icon: Briefcase },
+                    { label: "Focus", value: data.productivityHack, icon: Zap },
+                    { label: "Space", value: data.idealEnvironment, icon: HomeIcon },
+                    { label: "Priority", value: data.topPriority, icon: Target }
+                ].filter(item => item.value).map((item, idx) => (
+                    <div key={idx} className="p-4 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl shadow-sm">
+                        <div className="flex items-center gap-2 mb-2 text-purple-600 dark:text-purple-400">
+                            <item.icon className="w-3.5 h-3.5" />
+                            <span className="text-[9px] font-bold uppercase tracking-tighter">{item.label}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-3 leading-tight">{item.value}</p>
+                    </div>
+                ))}
+            </div>
+
+            <div className="p-10 md:p-14 bg-gradient-to-br from-slate-900 to-black text-white rounded-[3rem] text-left border border-white/10 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <TrendingUp className="w-48 h-48 rotate-[-15deg]" />
+                </div>
+                <h4 className="text-sm font-bold uppercase tracking-[0.3em] text-purple-400 mb-8 flex items-center gap-3">
+                    <Map className="w-6 h-6" /> The Master Roadmap
+                </h4>
+                <div className="space-y-6 relative z-10">
+                    {Array.isArray(data.wayForward) ? data.wayForward.map((step: any, i: number) => (
+                        <div key={i} className="flex gap-6 items-start group/step">
+                            <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/50 flex items-center justify-center text-xs font-bold text-purple-300 shrink-0 group-hover/step:bg-purple-500 group-hover/step:text-white transition-all">
+                                {i+1}
+                            </div>
+                            <p className="text-base md:text-lg font-medium leading-relaxed pt-0.5">{step}</p>
+                        </div>
+                    )) : (
+                        <div className="text-lg font-medium leading-relaxed">
+                            {data.wayForward}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-6 pt-10">
+                <button onClick={onNext} className="flex-1 py-6 bg-gray-900 dark:bg-white text-white dark:text-black rounded-[1.5rem] font-bold text-lg hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-2">
+                    Proceed to {nextStageLabel || "Next Stage"} <ArrowIcon className="w-5 h-5" />
+                </button>
+                <button onClick={onReset} className="px-10 py-6 border border-gray-200 dark:border-white/10 rounded-[1.5rem] font-bold text-gray-500 hover:text-red-500 hover:border-red-500/30 transition-all text-base">Restart</button>
+            </div>
         </div>
-    </div>
+    );
+};
+
+// Simple utility to fix missing icon import in the grid above
+const HomeIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
 );
 
 const IkigaiForm = ({ onSubmit }: any) => {

@@ -2,7 +2,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { 
   collection, getDocs, doc, deleteDoc, updateDoc, 
-  addDoc, setDoc, getDoc, query, orderBy 
+  addDoc, setDoc, getDoc, query, orderBy, where 
 } from "firebase/firestore";
 import { db, isMockMode } from "./firebaseConfig";
 
@@ -243,6 +243,65 @@ export const submitContribution = async (data: Omit<CommunityContribution, 'id' 
   }
   try { await addDoc(collection(db, "contributions"), newContribution); return true; }
   catch (error) { return false; }
+};
+
+export const fetchContributions = async (): Promise<CommunityContribution[]> => {
+  if (!db || isMockMode) return loadLocal('eunoia_contributions_db', []);
+  try {
+    const q = query(collection(db, "contributions"), orderBy("date", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CommunityContribution));
+  } catch (error) { return []; }
+};
+
+export const approveContributionOp = async (id: string): Promise<boolean> => {
+  if (!db || isMockMode) {
+    const contributions = loadLocal<CommunityContribution[]>('eunoia_contributions_db', []);
+    const idx = contributions.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      contributions[idx].approved = true;
+      saveLocal('eunoia_contributions_db', contributions);
+      return true;
+    }
+    return false;
+  }
+  try {
+    await updateDoc(doc(db, "contributions", id), { approved: true });
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const deleteContributionOp = async (id: string): Promise<boolean> => {
+  if (!db || isMockMode) {
+    const contributions = loadLocal<CommunityContribution[]>('eunoia_contributions_db', []);
+    saveLocal('eunoia_contributions_db', contributions.filter(c => c.id !== id));
+    return true;
+  }
+  try {
+    await deleteDoc(doc(db, "contributions", id));
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const fetchApprovedTestimonials = async (): Promise<CommunityContribution[]> => {
+  if (!db || isMockMode) {
+    const contributions = loadLocal<CommunityContribution[]>('eunoia_contributions_db', []);
+    return contributions.filter(c => c.type === 'testimonial' && c.approved);
+  }
+  try {
+    const q = query(
+      collection(db, "contributions"), 
+      where("type", "==", "testimonial"), 
+      where("approved", "==", true),
+      orderBy("date", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CommunityContribution));
+  } catch (error) { return []; }
 };
 
 export const fetchMessages = async (): Promise<ContactMessage[]> => {

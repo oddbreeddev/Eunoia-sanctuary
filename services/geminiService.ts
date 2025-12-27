@@ -32,7 +32,6 @@ const safeParseJSON = (text: string) => {
     }
 };
 
-// Fix: Always create a fresh instance of GoogleGenAI before making an API call to ensure use of the latest API key
 const generateData = async (systemPrompt: string, userPrompt: string, model: string = "gemini-3-flash-preview") => {
     if (!process.env.API_KEY) {
         return { success: false, error: "System not ready. API Key is missing." };
@@ -100,86 +99,89 @@ export const generateDailyAffirmation = async (profile: any) => {
 };
 
 export const generateIkigaiInsight = async (love: string, goodAt: string, worldNeeds: string, paidFor: string) => {
-    const systemPrompt = `You are a World-Class Career and Purpose Coach. Deeply analyze the intersection of the user's life pillars.
-    Provide a rich, detailed analysis that feels professional yet accessible.
+    const systemPrompt = `You are a Purpose Coach. Analyze the user's inputs. 
+    BE CONCISE. Avoid fluff.
     REQUIRED SCHEMA:
     {
-      "title": "A relatable and inspiring path title",
-      "description": "A detailed 3-paragraph explanation of how their unique inputs create a specific life mission.",
-      "strengths": ["4 detailed reasons why they are naturally suited for this"],
-      "weaknesses": ["3 specific obstacles they might face and how to navigate them"],
-      "careerAlignment": ["4 specific job roles or business types that fit"],
-      "immediateAction": "The very first step they can take in the next 24 hours.",
-      "wayForward": ["Step-by-step 3-part roadmap for the next 6 months"]
+      "title": "Path Title",
+      "summary": "ONE punchy sentence summarizing their path.",
+      "description": "A focused 150-word analysis.",
+      "strengths": ["4 bullet points"],
+      "weaknesses": ["3 points"],
+      "careerAlignment": ["4 roles"],
+      "immediateAction": "One clear first step.",
+      "wayForward": ["3-part roadmap"]
     }`;
     return generateData(systemPrompt, `Love: ${love}, Good At: ${goodAt}, Needs: ${worldNeeds}, Paid: ${paidFor}`);
 };
 
 export const analyzePersonality = async (quizAnswers: string, selfDescription: string) => {
-    const systemPrompt = `You are a Senior Behavioral Psychologist. Analyze these quiz results to provide a deep personality profile.
-    Go beyond generic labels to explain the 'Core Driver' of the user.
+    const systemPrompt = `You are a Behavioral Psychologist. Analyze these quiz results. 
+    Focus on quality over quantity. Keep it punchy.
     REQUIRED SCHEMA:
     {
       "title": "Archetype Name",
-      "tagline": "A powerful, defining catchphrase",
-      "description": "A comprehensive 400-word analysis of their mental processing and decision-making style.",
-      "strengths": ["5 unique superpowers based on their profile"],
-      "weaknesses": ["4 specific growth areas or blind spots to monitor"],
-      "socialDynamics": "How they interact with others and what they need from relationships.",
-      "stressManagement": "A specific technique for them to stay grounded based on their type.",
-      "careerAlignment": "The type of environment where they thrive most.",
-      "wayForward": "Actionable advice on how to use these traits to succeed this week."
+      "tagline": "A defining catchphrase",
+      "summary": "ONE powerful sentence defining their core driver.",
+      "description": "A high-impact 150-word deep dive.",
+      "strengths": ["5 unique superpowers"],
+      "weaknesses": ["4 blind spots"],
+      "socialDynamics": "Short summary of interactions.",
+      "stressManagement": "One specific technique.",
+      "careerAlignment": "Ideal environment description.",
+      "wayForward": "Actionable advice for this week."
     }`;
     return generateData(systemPrompt, quizAnswers);
 };
 
 export const analyzeTemperament = async (quizAnswers: string, energyDescription: string) => {
-    const systemPrompt = `You are a Biological Rhythms and Energy Coach. Analyze these inputs to define the user's natural temperament.
-    Explain how their biology influences their daily productivity and emotional baseline.
+    const systemPrompt = `You are an Energy Coach. Define the user's natural temperament.
     REQUIRED SCHEMA:
     {
-      "title": "Energy Style / Temperament Name",
-      "tagline": "A description of their natural frequency",
-      "description": "A deep dive into their energy cycles, emotional resilience, and social battery capacity.",
-      "strengths": ["4 energy-based advantages they possess"],
-      "weaknesses": ["3 energy-draining traps they often fall into"],
-      "productivityHack": "A specific productivity system (like Pomodoro, Time Blocking, etc.) that fits their rhythm.",
-      "idealEnvironment": "The physical surroundings that maximize their focus.",
-      "socialInteraction": "How they best recharge after social events.",
-      "wayForward": "A specific daily routine suggestion to optimize their unique energy."
+      "title": "Temperament Name",
+      "tagline": "Natural frequency description",
+      "summary": "ONE sentence about their energy baseline.",
+      "description": "A focused 150-word deep dive.",
+      "strengths": ["4 advantages"],
+      "weaknesses": ["3 traps"],
+      "productivityHack": "One specific system.",
+      "idealEnvironment": "Optimal focus space.",
+      "socialInteraction": "Recharge method.",
+      "wayForward": "Routine suggestion."
     }`;
     return generateData(systemPrompt, quizAnswers);
 };
 
 export const generateLifeSynthesis = async (data: any) => {
-    const systemPrompt = `You are a Strategic Life Architect. Synthesize all psychological data into a Master Life Strategy.
-    This should be the most comprehensive part of the app. Provide deep, long-term strategic value.
+    const systemPrompt = `You are a Strategic Life Architect. Synthesize data into a Master Life Strategy.
+    KEEP IT ACTION-ORIENTED.
     REQUIRED SCHEMA:
     {
       "title": "The Strategic Legacy",
-      "mantra": "A powerful life-guiding principle",
-      "description": "A holistic 500-word summary that blends personality, energy, and purpose into a cohesive identity.",
-      "strengths": ["6 major life advantages created by this unique combination"],
-      "weaknesses": ["5 potential pitfalls where their traits might conflict"],
-      "topPriority": "The single most important goal for their current life stage.",
-      "secondaryGoals": ["3 supporting objectives for health, wealth, and relationships"],
-      "wayForward": ["A detailed 5-stage roadmap for personal and professional mastery."]
+      "mantra": "A powerful guiding principle",
+      "summary": "ONE sentence that captures their combined identity.",
+      "description": "A 200-word holistic summary.",
+      "strengths": ["6 major advantages"],
+      "weaknesses": ["5 pitfalls"],
+      "topPriority": "Single most important goal.",
+      "secondaryGoals": ["3 supporting objectives"],
+      "wayForward": ["5-stage roadmap"]
     }`;
     return generateData(systemPrompt, JSON.stringify(data), "gemini-3-pro-preview");
 };
 
 export const generateShadowWork = async (profile: any) => {
-    const systemPrompt = `You are a Depth Psychology Guide. Help the user uncover their 'Shadow'—the hidden aspects of their psyche.
-    Be gentle but honest. Use simple language to explain complex Jungian concepts.
+    const systemPrompt = `You are a Depth Psychology Guide. Help the user uncover their 'Shadow'.
     REQUIRED SCHEMA:
     {
       "title": "Shadow Archetype",
       "tagline": "The hidden mirror",
-      "description": "A deep explanation of the traits they tend to repress or deny.",
-      "strengths": ["Hidden talents they haven't claimed yet"],
-      "weaknesses": ["Habits they use to hide from growth"],
-      "integrationExercise": "A specific psychological exercise to integrate these shadow traits.",
-      "wayForward": "How to move from denial to self-acceptance."
+      "summary": "ONE sentence about what they tend to repress.",
+      "description": "A 150-word focused analysis.",
+      "strengths": ["Hidden talents"],
+      "weaknesses": ["Repressive habits"],
+      "integrationExercise": "One specific exercise.",
+      "wayForward": "Path to self-acceptance."
     }`;
     return generateData(systemPrompt, JSON.stringify(profile));
 };
