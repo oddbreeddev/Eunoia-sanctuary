@@ -6,7 +6,7 @@ import {
   Heart, Briefcase, Zap, Layers, Target, Clock, BookOpen, Fingerprint, Loader2, Sparkles, ArrowRight as ArrowIcon, X,
   Quote, Sun, Play, Check, Moon, Share2, Map, Calendar, TrendingUp, Minus, Ghost, Eye, Send, RotateCcw, Sunrise, Sunset, Coffee, ListChecks,
   Globe, Handshake, HeartOff, Landmark, History, Bell, BellOff, Info, Sparkle, HelpCircle, Lightbulb as IdeaIcon, Copy, RefreshCw,
-  Twitter, Share, Plus, Trash, ChevronDown, ChevronUp
+  Twitter, Share, Plus, Trash, ChevronDown, ChevronUp, Sparkle as SparkleIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../services/firebaseConfig';
@@ -22,6 +22,76 @@ const MODULES = [
   { id: 'shadow', title: 'Blind Spots', key: 'shadowWork', desc: 'Growth Areas', icon: Ghost, color: 'slate', requiredFor: 'synthesis' },
   { id: 'identity', title: 'Profile Name', key: 'nickname', desc: 'Personal Nickname', icon: Star, color: 'amber', requiredFor: 'personality' }
 ];
+
+const OnboardingGuide = ({ onStart }: { onStart: () => void }) => {
+  const [step, setStep] = useState(0);
+  const slides = [
+    {
+      icon: <Sparkles className="w-12 h-12 text-purple-500" />,
+      title: "Welcome to the Sanctuary",
+      description: "Eunoia is a laboratory for your soul. Here, we blend depth psychology with AI to help you map your internal universe.",
+      tip: "Find a quiet space. Reflection requires stillness."
+    },
+    {
+      icon: <Target className="w-12 h-12 text-cyan-500" />,
+      title: "The Four-Step Path",
+      description: "You'll progress through Personality, Temperament, and Ikigai to build your Master Life Strategy. Each step unlocks the next.",
+      tip: "Be brutally honest. There are no 'wrong' answers here, only truths."
+    },
+    {
+      icon: <Zap className="w-12 h-12 text-amber-500" />,
+      title: "Daily Evolution",
+      description: "Once your profile is set, your dashboard provides daily blueprints, affirmations, and a 'Mirror Chamber' for nightly reflection.",
+      tip: "Small daily insights lead to massive life shifts."
+    }
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+      <div className="max-w-lg w-full bg-white dark:bg-gray-900 rounded-[3rem] p-10 md:p-14 border border-gray-200 dark:border-white/10 shadow-2xl relative text-center overflow-hidden">
+        {/* Abstract Background */}
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-500 via-cyan-500 to-amber-500"></div>
+        
+        <div className="relative z-10 animate-fade-in" key={step}>
+          <div className="flex justify-center mb-8 transform scale-125">
+            {slides[step].icon}
+          </div>
+          <h2 className="text-3xl font-bold dark:text-white mb-4">{slides[step].title}</h2>
+          <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-10 text-lg">
+            {slides[step].description}
+          </p>
+          
+          <div className="bg-gray-50 dark:bg-white/5 p-4 rounded-2xl border border-dashed border-gray-200 dark:border-white/10 mb-10 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-3 justify-center">
+            <Info className="w-4 h-4 text-purple-500" /> Pro Tip: {slides[step].tip}
+          </div>
+          
+          <div className="flex gap-4">
+            {step > 0 && (
+              <button 
+                onClick={() => setStep(step - 1)}
+                className="flex-1 py-4 border border-gray-200 dark:border-white/10 rounded-2xl font-bold text-gray-500 hover:bg-gray-50 transition-all"
+              >
+                Back
+              </button>
+            )}
+            <button 
+              onClick={() => step < slides.length - 1 ? setStep(step + 1) : onStart()}
+              className="flex-[2] py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-2xl font-bold shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
+            >
+              {step === slides.length - 1 ? 'Enter Sanctuary' : 'Continue'} <ArrowIcon className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="flex justify-center gap-2 mt-8">
+            {slides.map((_, i) => (
+              <div key={i} className={`w-2 h-2 rounded-full transition-all ${i === step ? 'bg-purple-500 w-6' : 'bg-gray-200 dark:bg-white/10'}`}></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const DynamicLoader = ({ text }: { text: string }) => {
   const [dots, setDots] = useState('');
@@ -47,6 +117,7 @@ const DashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Analyzing Results');
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [userData, setUserData] = useState<any>({
     name: 'User',
     archetype: null, temperament: null, ikigai: null, synthesis: null,
@@ -85,6 +156,12 @@ const DashboardPage: React.FC = () => {
             if (profile) {
                 setUserData(prev => ({ ...prev, ...profile }));
                 
+                // Show onboarding if personality is not yet done and they haven't seen it
+                const onboardingSeen = localStorage.getItem(`onboarding_seen_${uid}`);
+                if (!profile.archetype && !onboardingSeen) {
+                  setShowOnboarding(true);
+                }
+
                 if (profile.archetype || profile.temperament) {
                     const blueprintRes = await generateDailyBlueprint(profile);
                     if (blueprintRes.success) setDailyBlueprint(blueprintRes.data);
@@ -103,6 +180,12 @@ const DashboardPage: React.FC = () => {
     }
     return () => unsubscribe?.();
   }, [navigate]);
+
+  const handleFinishOnboarding = () => {
+    setShowOnboarding(false);
+    const uid = auth?.currentUser?.uid || JSON.parse(localStorage.getItem('eunoia_user') || '{}').uid;
+    if (uid) localStorage.setItem(`onboarding_seen_${uid}`, 'true');
+  };
 
   const handleRefreshAffirmation = async () => {
     setRefreshingAffirmation(true);
@@ -241,6 +324,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className={`min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 transition-all duration-1000 bg-gradient-to-br ${bgStyles}`}>
+      {showOnboarding && <OnboardingGuide onStart={handleFinishOnboarding} />}
       <div className="max-w-6xl mx-auto">
         {!activeModule && (
             <div className="mb-8 space-y-10 animate-fade-in">
@@ -277,7 +361,7 @@ const DashboardPage: React.FC = () => {
                 {dailyAffirmationText && (
                   <div className="relative group overflow-hidden rounded-[2.5rem] border border-purple-200 dark:border-purple-500/20 bg-gradient-to-br from-purple-50 via-white to-cyan-50 dark:from-purple-950/20 dark:via-gray-900 dark:to-cyan-950/20 p-10 md:p-14 shadow-2xl animate-fade-in transition-all hover:shadow-purple-500/10 text-center">
                     <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <Sparkle className="w-40 h-40 text-purple-600 dark:text-purple-400" />
+                      <SparkleIcon className="w-40 h-40 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div className="relative z-10 flex flex-col items-center max-w-3xl mx-auto">
                       <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] mb-8 border border-purple-200 dark:border-purple-800">
@@ -492,6 +576,12 @@ const DashboardPage: React.FC = () => {
                                 <p className="text-xs text-gray-400 italic text-center py-10">Your daily growth reports will appear here.</p>
                             )}
                         </div>
+                        <button 
+                          onClick={() => setShowOnboarding(true)}
+                          className="mt-6 w-full py-3 bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-purple-500 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+                        >
+                          View Sanctuary Guide
+                        </button>
                     </div>
                 </div>
             </div>
