@@ -9,6 +9,7 @@ import QuoteSection from './QuoteSection';
 import Contact from './Contact';
 import IkigaiTeaser from './IkigaiTeaser';
 import CommunityContribution from './CommunityContribution';
+import Newsletter from './Newsletter';
 
 const LandingPage: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ const LandingPage: React.FC = () => {
       <Testimonials />
       <IkigaiTeaser />
       <CommunityContribution />
+      <Newsletter />
       <FAQ />
       <QuoteSection />
       <Contact />
